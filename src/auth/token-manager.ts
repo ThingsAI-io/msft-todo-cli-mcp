@@ -1,5 +1,6 @@
 import type { TokenData } from '../types.js';
 import { load, save } from './token-store.js';
+import { runSetup } from './setup.js';
 
 let refreshPromise: Promise<string> | null = null;
 
@@ -82,11 +83,20 @@ export async function getAccessToken(): Promise<string> {
   }
 
   // 2. Load from encrypted store
-  const stored = load();
+  let stored = load();
   if (!stored) {
-    throw new Error(
-      "No authentication found. Run 'todo setup' to authenticate.",
-    );
+    // Auto-trigger OAuth setup if client ID is available (e.g. from MCP env)
+    const clientId = process.env['TODO_MCP_CLIENT_ID'];
+    if (clientId) {
+      const tenant = process.env['TODO_MCP_TENANT'] ?? 'consumers';
+      await runSetup({ clientId, tenant, silent: true });
+      stored = load();
+    }
+    if (!stored) {
+      throw new Error(
+        "No authentication found. Run 'todo setup' to authenticate.",
+      );
+    }
   }
 
   if (!isExpiringSoon(stored.expiresAt)) {

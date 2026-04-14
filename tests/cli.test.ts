@@ -208,9 +208,14 @@ describe('CLI command routing', () => {
     expect(deleteChecklistItem).toHaveBeenCalledWith(expect.anything(), 'lid', 'tid', 'iid');
   });
 
-  it('15. setup invokes runSetup', async () => {
+  it('15. setup invokes runSetup with options', async () => {
+    await run(['setup', '--client-id', 'my-id', '--tenant', 'my-tenant']);
+    expect(runSetup).toHaveBeenCalledWith({ clientId: 'my-id', tenant: 'my-tenant' });
+  });
+
+  it('15b. setup invokes runSetup with no flags', async () => {
     await run(['setup']);
-    expect(runSetup).toHaveBeenCalled();
+    expect(runSetup).toHaveBeenCalledWith({ clientId: undefined, tenant: undefined });
   });
 
   it('16. serve invokes startMcpServer', async () => {

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.1] — 2026-04-14
+
+### Added
+
+- **Auto-authentication in MCP serve**: When `todo serve` detects no stored tokens and `TODO_MCP_CLIENT_ID` is set in the environment, it automatically initiates the OAuth PKCE browser flow. Output goes to stderr to keep the MCP stdio transport clean. First tool call handles everything — no separate setup step needed.
+- **`--client-id` and `--tenant` flags for `todo setup`**: CLI users can now run `todo setup --client-id <id>` instead of setting environment variables.
+
 ## [0.1.0] — 2026-04-14
 
 Initial release. Full implementation from spec (`spec/intent.md`).

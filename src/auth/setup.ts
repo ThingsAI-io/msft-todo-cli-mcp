@@ -101,16 +101,18 @@ const SUCCESS_HTML = `<!DOCTYPE html>
 </div>
 </body></html>`;
 
-/** Run the full interactive OAuth PKCE setup flow. */
-export async function runSetup(): Promise<void> {
-  const clientId = process.env["TODO_MCP_CLIENT_ID"];
+/** Run the full interactive OAuth PKCE setup flow.
+ *  When `silent` is true, all user-facing messages go to stderr (safe for MCP stdio). */
+export async function runSetup(options?: { clientId?: string; tenant?: string; silent?: boolean }): Promise<void> {
+  const clientId = options?.clientId ?? process.env["TODO_MCP_CLIENT_ID"];
   if (!clientId) {
     throw new Error(
       "TODO_MCP_CLIENT_ID environment variable is required. " +
       "Set it to your Azure AD app registration client ID.",
     );
   }
-  const tenant = process.env["TODO_MCP_TENANT"] ?? "consumers";
+  const tenant = options?.tenant ?? process.env["TODO_MCP_TENANT"] ?? "consumers";
+  const log = options?.silent ? (...args: unknown[]) => console.error(...args) : console.log;
 
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
@@ -160,24 +162,26 @@ export async function runSetup(): Promise<void> {
 
           server.close();
 
-          console.log(`\n✓ Authentication successful!\n`);
-          console.log(`To use with VS Code, add to settings.json:`);
-          console.log(
-            JSON.stringify(
-              {
-                mcp: {
-                  servers: {
-                    todo: {
-                      command: "todo",
-                      args: ["serve"],
+          log(`\n✓ Authentication successful!\n`);
+          if (!options?.silent) {
+            log(`To use with VS Code, add to settings.json:`);
+            log(
+              JSON.stringify(
+                {
+                  mcp: {
+                    servers: {
+                      todo: {
+                        command: "todo",
+                        args: ["serve"],
+                      },
                     },
                   },
                 },
-              },
-              null,
-              2,
-            ),
-          );
+                null,
+                2,
+              ),
+            );
+          }
 
           resolve();
         } catch (err) {
@@ -191,7 +195,7 @@ export async function runSetup(): Promise<void> {
     );
 
     server.listen(3847, () => {
-      console.log("Waiting for authentication...");
+      log("Waiting for authentication... (a browser window should open)");
       openBrowser(authUrl);
     });
 

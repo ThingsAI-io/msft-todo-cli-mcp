@@ -17,7 +17,7 @@ import type { CreateTaskInput, UpdateTaskInput, TaskImportance, TaskStatus } fro
 const USAGE = `Usage: todo <command> [options]
 
 Commands:
-  setup                              Configure OAuth credentials
+  setup [--client-id <id>] [--tenant <t>]  Configure OAuth credentials
   serve                              Start MCP server
   lists                              List all task lists
   lists create <name>                Create a task list
@@ -58,7 +58,19 @@ export async function run(args: string[]): Promise<void> {
   }
 
   if (resource === 'setup') {
-    await runSetup();
+    const { values: setupValues } = parseArgs({
+      args: args.slice(1),
+      options: {
+        'client-id': { type: 'string' },
+        tenant: { type: 'string' },
+      },
+      strict: false,
+      allowPositionals: true,
+    });
+    await runSetup({
+      clientId: setupValues['client-id'] as string | undefined,
+      tenant: setupValues.tenant as string | undefined,
+    });
     return;
   }
 
