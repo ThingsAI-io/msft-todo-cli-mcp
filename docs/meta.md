@@ -135,3 +135,21 @@ After the core implementation, additional passes covered:
 | **Total** | **14** (incl. inline) | **~16 min** | From first prompt to fully documented, tested, and packaged |
 
 *Note: Token usage per phase was not captured by the session telemetry. Wall-clock times are approximate, measured from agent dispatch to last agent completion.*
+
+## Phase 4: Spec Feedback Loop
+
+After testing the initial release, several gaps were discovered that required follow-up prompts — things the spec should have specified upfront but didn't. Rather than just fixing the code, we retroactively amended `spec/intent.md` to make it self-sufficient, so that the same spec could regenerate the full project without additional human guidance.
+
+**Gaps identified and backported to `intent.md`:**
+
+| Gap | What was missing | Where added in spec |
+|-----|-----------------|-------------------|
+| Auto-auth in MCP serve | `todo serve` and `todo setup` were decoupled — MCP users had to run setup separately in a terminal without the env vars | OAuth Flow section |
+| `--client-id` CLI flag | Only env vars for passing client ID; terminal users had to `export` before running setup | CLI entry point commands |
+| Azure AD app creation | Spec assumed a client ID exists but never explained how to get one | New section after Token Storage |
+| npm packaging | No scoped package name, publish config, or `files` array | `package.json` essentials |
+| Documentation structure | Spec said "README" but not a `docs/` folder with dedicated guides | Implementation Order |
+| Versioning & CHANGELOG | No mention of semver, changelog format, or version sync between `package.json` and `mcp.ts` | New section after Definition of Done |
+
+This "push-back-to-spec" cycle is a useful pattern: build from the spec, discover what's missing during real usage, then amend the spec so future builds from it are complete. The spec becomes a living document that improves with each implementation pass.
+

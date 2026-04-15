@@ -95,6 +95,7 @@ Both interfaces share: Graph API client, auth/token management, input validation
 - Azure AD app registration as a **public client** with `http://localhost:3847/callback` redirect URI
 - Tenant: `consumers` (personal Microsoft accounts) or `common` (both personal + org) — configurable via env var
 - One-time interactive auth via system browser → localhost callback → store tokens
+- **Auto-auth from MCP serve**: When `todo serve` detects no stored tokens and `TODO_MCP_CLIENT_ID` is available, it auto-triggers the OAuth browser flow inline. All auth messages go to **stderr** (not stdout) to keep the MCP JSON-RPC stdio transport clean. This means MCP users never need to run `todo setup` separately — the first tool call handles everything.
 
 ### Token Storage
 - Tokens stored in platform-specific secure storage:
@@ -102,6 +103,34 @@ Both interfaces share: Graph API client, auth/token management, input validation
   - **Cross-platform fallback**: AES-256-GCM encryption with a key derived from machine identity (hostname + username + a salt), stored in the user's config directory
 - Token file location: `~/.config/todo-mcp/tokens.enc` (Linux/macOS) or `%APPDATA%/todo-mcp/tokens.enc` (Windows)
 - **Never store tokens in plaintext. Never store client secrets (there are none — public client).**
+
+### Azure AD App Registration
+
+Users need an Azure AD app registration to get a client ID. The README and docs must include both methods:
+
+**Azure Portal:**
+1. Go to Azure Portal → App registrations → New registration
+2. Name: anything (e.g., "Todo MCP Server")
+3. Supported account types: "Accounts in any organizational directory and personal Microsoft accounts"
+4. Redirect URI: Platform = "Mobile and desktop applications", URI = `http://localhost:3847/callback`
+5. Under API permissions → Add → Microsoft Graph → Delegated → `Tasks.ReadWrite`
+6. Copy the Application (client) ID
+
+**Azure CLI (one-liner):**
+```bash
+az ad app create \
+  --display-name "Todo MCP Server" \
+  --public-client-redirect-uris "http://localhost:3847/callback" \
+  --sign-in-audience "AzureADandPersonalMicrosoftAccount" \
+  --query appId -o tsv
+```
+Then add the permission:
+```bash
+az ad app permission add \
+  --id <APP_ID> \
+  --api 00000003-0000-0000-c000-000000000000 \
+  --api-permissions 2219042f-cab5-40cc-b0d2-16b1540b4c5f=Scope
+```
 
 ### Project Structure
 
@@ -638,13 +667,20 @@ system/src/todo-mcp-server/
 
 ```json
 {
-  "name": "todo-mcp-server",
+  "name": "@thingsai/todo-mcp-server",
   "version": "0.1.0",
   "type": "module",
+  "description": "CLI-first Microsoft To Do management with MCP server wrapper",
   "main": "dist/cli.js",
   "bin": {
     "todo": "dist/cli.js"
   },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node dist/cli.js",
@@ -652,7 +688,12 @@ system/src/todo-mcp-server/
     "setup": "tsx src/auth/setup.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["microsoft-todo", "mcp", "cli", "tasks", "graph-api"],
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=20"
@@ -753,10 +794,11 @@ dist/
       todo checklist --list <id> --task <id>         # list sub-steps
       todo checklist add --list <id> --task <id> --text "Open doc"
       todo serve                                    # start MCP server on stdio
-      todo setup                                    # run interactive OAuth setup
+      todo setup --client-id <id>                    # run interactive OAuth setup
+      todo setup --client-id <id> --tenant <tenant>  # setup with custom tenant
       ```
     - `todo serve` delegates to `startMcpServer()` from `src/mcp.ts`
-    - `todo setup` delegates to the auth setup flow
+    - `todo setup` accepts `--client-id` and `--tenant` flags so users don't need to set env vars. Falls back to `TODO_MCP_CLIENT_ID` / `TODO_MCP_TENANT` env vars if flags aren't provided.
     - Write tests for arg parsing and command routing
 
 11. **MCP server module** — Build `src/mcp.ts`:
@@ -766,14 +808,17 @@ dist/
     - ~50-100 lines of code — all logic lives in core
     - Manual smoke test: run via `echo '...' | todo serve`
 
-12. **README** — Write setup instructions:
-    - Azure AD app registration steps (with portal links)
-    - Running `todo setup` command
-    - CLI usage examples
-    - MCP client configuration (VS Code `settings.json` snippet): `"command": "todo", "args": ["serve"]`
-    - Environment variable reference
+12. **README** — Keep the README slim (~50 lines). Quick install, one setup command, one MCP config snippet, link to docs/ for details.
 
-13. **End-to-end smoke test** — With a real Azure AD app:
+13. **Documentation** — Create a `docs/` folder with detailed guides:
+    - `getting-started.md` — Install, create Azure app, authenticate, first command
+    - `azure-setup.md` — Step-by-step Azure AD app registration (both Portal and `az cli` methods)
+    - `cli-reference.md` — Full command reference with examples for every command
+    - `mcp-integration.md` — MCP client configuration for VS Code, Claude Desktop, etc.
+    - `configuration.md` — Environment variables, token storage paths, tenant configuration
+    - `security.md` — Security model, threat model, what's protected and what's not
+
+14. **End-to-end smoke test** — With a real Azure AD app:
     - Run setup, authenticate
     - CLI: create list → create task with due date + reminder + checklist items → read back → complete → delete
     - MCP: verify same operations work through MCP transport
@@ -824,5 +869,14 @@ dist/
 - [ ] Only 2 runtime dependencies: `@modelcontextprotocol/sdk`, `zod`
 - [ ] Scopes limited to `Tasks.ReadWrite` + `offline_access`
 - [ ] README with setup instructions and MCP client config snippet (`"command": "todo", "args": ["serve"]`)
+- [ ] `docs/` folder with all 6 documentation pages
 - [ ] End-to-end verified: create list → create task with due date + reminder + checklist items → read back → complete → delete
 - [ ] `.gitignore` covers `node_modules/`, `dist/`, `*.enc`, `.env`
+- [ ] `CHANGELOG.md` created with initial release notes
+- [ ] `npm publish --access public` ready (dry-run passes)
+
+## Versioning
+
+- Follow [semver](https://semver.org/). Initial release is `0.1.0`.
+- Maintain a `CHANGELOG.md` using [Keep a Changelog](https://keepachangelog.com/) format.
+- Every version bump must update both `package.json` version and the version string in `src/mcp.ts` (`McpServer` constructor).
