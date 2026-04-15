@@ -4,9 +4,12 @@ Full command reference for `@thingsai/todo-mcp-server`.
 
 ## Global Flags
 
-| Flag     | Description                                      |
-| -------- | ------------------------------------------------ |
-| `--json` | Output in JSON format (available on all read/list commands) |
+| Flag        | Description                                      |
+| ----------- | ------------------------------------------------ |
+| `--json`    | Output in JSON format (available on all read/list commands) |
+| `--version` | Show the version number |
+
+> **Note:** Unknown flags are rejected. The CLI uses strict argument parsing to prevent silent errors.
 
 ---
 
@@ -36,6 +39,15 @@ Show usage help.
 
 ```bash
 todo help
+```
+
+#### `todo version`
+
+Show the version number.
+
+```bash
+todo version
+todo --version
 ```
 
 ---
@@ -88,7 +100,10 @@ List tasks in a list.
 ```bash
 todo tasks --list AAMkAD...
 todo tasks --list AAMkAD... --json
+todo tasks --list AAMkAD... --status completed
 ```
+
+Use `--status` to filter by task status (`notStarted`, `inProgress`, `completed`, `waitingOnOthers`, `deferred`).
 
 #### `todo tasks create`
 
@@ -198,9 +213,11 @@ Update a checklist item.
 | `--item <id>`    | Yes      | Checklist item ID            |
 | `--text <text>`  | No       | New display text             |
 | `--checked`      | No       | Mark the item as checked     |
+| `--unchecked`    | No       | Mark the item as unchecked   |
 
 ```bash
 todo checklist update --list AAMkAD... --task AAMkAD... --item AAMkAD... --checked
+todo checklist update --list AAMkAD... --task AAMkAD... --item AAMkAD... --unchecked
 todo checklist update --list AAMkAD... --task AAMkAD... --item AAMkAD... --text "Updated text"
 ```
 

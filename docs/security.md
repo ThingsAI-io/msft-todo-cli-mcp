@@ -25,6 +25,10 @@ Both audited implementations use `@azure/msal-node`:
 
 MSAL adds ~500KB of dependencies for what amounts to two `fetch()` calls (authorize + token exchange). We use raw `fetch()` to the standard Microsoft OAuth 2.0 endpoints with PKCE parameters — the same HTTP requests MSAL would make internally, without the abstraction layer.
 
+### CSRF Protection
+
+The authorization request includes a cryptographic `state` parameter — a 32-byte random hex string generated per login attempt. The OAuth callback verifies this value matches before accepting the authorization code. This prevents cross-site request forgery attacks where a malicious site could trick the callback into accepting a forged authorization code.
+
 ## Token Storage: AES-256-GCM Encryption
 
 Tokens are encrypted at rest using authenticated encryption:
@@ -33,6 +37,7 @@ Tokens are encrypted at rest using authenticated encryption:
 - **Key derivation**: PBKDF2 with SHA-512, 100,000 iterations
 - **Key material**: `hostname + username + random salt` — binding the key to the machine and user
 - **Per-encryption**: fresh random IV (12 bytes) and salt (16 bytes) for every write
+- **File permissions**: On POSIX systems, token file is written with mode `0o600` (owner read/write only) and its directory with `0o700` (owner access only). On Windows, these permissions are managed by the OS.
 - **Storage format**: JSON with `{ salt, iv, tag, data }` — all hex-encoded
 
 ### What this protects against
@@ -90,6 +95,28 @@ Each decision below references the audit finding that motivated it:
 
 8. **No hardcoded tenant** — The OAuth tenant (`consumers`, `common`, or an org tenant ID) is always read from configuration. *(jhirono hardcodes `consumers` in the token refresh path, breaking organizational accounts)*
 
+9. **No redirect following** — HTTP requests use `redirect: 'error'` to prevent the Bearer token from being forwarded to unexpected domains via server-side redirects. *(A standard `fetch()` follows redirects by default, potentially leaking the Authorization header)*
+
+## Input Validation & Sanitization
+
+### ID Validation
+
+All Graph API resource IDs (list IDs, task IDs, checklist item IDs) are validated against `/^[A-Za-z0-9_=\-]+$/` before being interpolated into API URL paths. This prevents path traversal attacks where a crafted ID like `../../beta/users` could target unintended Graph API endpoints.
+
+### OData Injection Protection
+
+The `--status` and `--importance` CLI flags, and the MCP `status` enum parameter, are validated against their allowed values before being interpolated into OData `$filter` expressions. This prevents OData query injection via crafted filter values.
+
+### Terminal Escape Sanitization
+
+Task titles, list names, body content, and checklist item names from the Graph API are sanitized before terminal rendering. ANSI escape sequences (e.g., `\x1b[2J`) and control characters (bytes `0x00`–`0x1F` except newline) are stripped. This prevents malicious task content from clearing the terminal, spoofing output, or exploiting terminal emulator vulnerabilities.
+
+JSON output (`--json`) is not affected — `JSON.stringify` already escapes control characters.
+
+### Strict CLI Parsing
+
+All CLI `parseArgs` calls use `strict: true`, meaning unrecognized flags are rejected with an error. This prevents silent argument injection and improves error feedback.
+
 ## Network Endpoints
 
 This is an exhaustive list of every endpoint this tool contacts:
@@ -104,6 +131,15 @@ This is an exhaustive list of every endpoint this tool contacts:
 **No telemetry. No analytics. No third-party endpoints.**
 
 The localhost callback server starts only for the authentication flow and shuts down immediately after receiving the authorization code.
+
+## Rate Limiting
+
+The Graph API client automatically handles HTTP 429 (Too Many Requests) responses:
+
+- Reads the `Retry-After` header to determine wait time
+- Falls back to exponential backoff (`1s, 2s, 4s, ...`) if the header is absent
+- Retries up to 3 times before throwing an error
+- The `GraphApiError` class exposes `isRetryable` for callers that want custom retry logic
 
 ## Dependencies
 

@@ -61,7 +61,7 @@ export async function run(args: string[]): Promise<void> {
   }
 
   if (resource === '--version' || resource === 'version') {
-    console.log('0.1.1');
+    console.log('0.2.0');
     return;
   }
 

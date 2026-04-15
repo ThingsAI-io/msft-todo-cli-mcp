@@ -37,7 +37,7 @@ function errorResult(err: unknown): CallToolResult {
 }
 
 export function createMcpServer(client: GraphClient): McpServer {
-  const server = new McpServer({ name: 'todo-mcp-server', version: '0.1.1' });
+  const server = new McpServer({ name: 'todo-mcp-server', version: '0.2.0' });
 
   // Task Lists
   server.tool('list-task-lists', `List all task lists. ${HIERARCHY}`, {}, async () => {
