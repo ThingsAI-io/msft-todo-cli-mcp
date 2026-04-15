@@ -58,23 +58,25 @@ Any MCP client that supports stdio transport can use this server. The command is
 
 ## Available Tools
 
-The server exposes 13 tools across three categories.
+The server exposes 15 tools across three categories.
 
 | # | Tool | Description | Parameters |
 |---|------|-------------|------------|
 | 1 | `list-task-lists` | List all task lists | _(none)_ |
-| 2 | `create-task-list` | Create a new task list | `displayName` (string, **required**) |
-| 3 | `update-task-list` | Update a task list's name | `listId` (string, **required**), `displayName` (string, **required**) |
-| 4 | `delete-task-list` | Delete a task list | `listId` (string, **required**) |
-| 5 | `list-tasks` | List tasks in a task list | `listId` (string, **required**), `status` (enum, optional), `top` (number, optional) |
-| 6 | `create-task` | Create a new task | `listId` (string, **required**), `title` (string, **required**), `body` (string, optional), `dueDateTime` (string, optional), `reminderDateTime` (string, optional), `importance` (enum, optional), `startDateTime` (string, optional), `status` (enum, optional), `categories` (string[], optional) |
-| 7 | `update-task` | Update an existing task | `listId` (string, **required**), `taskId` (string, **required**), `title` (string, optional), `body` (string, optional), `dueDateTime` (string, optional), `reminderDateTime` (string, optional), `importance` (enum, optional), `startDateTime` (string, optional), `status` (enum, optional), `categories` (string[], optional) |
-| 8 | `delete-task` | Delete a task | `listId` (string, **required**), `taskId` (string, **required**) |
-| 9 | `complete-task` | Mark a task as completed | `listId` (string, **required**), `taskId` (string, **required**) |
-| 10 | `list-checklist-items` | List checklist items (sub-steps) of a task | `listId` (string, **required**), `taskId` (string, **required**) |
-| 11 | `create-checklist-item` | Create a checklist item (sub-step) on a task | `listId` (string, **required**), `taskId` (string, **required**), `displayName` (string, **required**), `isChecked` (boolean, optional) |
-| 12 | `update-checklist-item` | Update a checklist item (sub-step) | `listId` (string, **required**), `taskId` (string, **required**), `checklistItemId` (string, **required**), `displayName` (string, optional), `isChecked` (boolean, optional) |
-| 13 | `delete-checklist-item` | Delete a checklist item (sub-step) | `listId` (string, **required**), `taskId` (string, **required**), `checklistItemId` (string, **required**) |
+| 2 | `get-task-list` | Get a single task list by ID | `listId` (string, **required**) |
+| 3 | `create-task-list` | Create a new task list | `displayName` (string, **required**) |
+| 4 | `update-task-list` | Update a task list's name | `listId` (string, **required**), `displayName` (string, **required**) |
+| 5 | `delete-task-list` | Delete a task list | `listId` (string, **required**) |
+| 6 | `list-tasks` | List tasks in a task list | `listId` (string, **required**), `status` (enum, optional), `top` (number, optional, default: 100), `filter` (string, optional — OData $filter expression), `orderby` (string, optional — OData $orderby expression) |
+| 7 | `get-task` | Get a single task by ID | `listId` (string, **required**), `taskId` (string, **required**) |
+| 8 | `create-task` | Create a new task | `listId` (string, **required**), `title` (string, **required**), `body` (string, optional), `dueDateTime` (string, optional), `reminderDateTime` (string, optional), `importance` (enum, optional), `startDateTime` (string, optional), `status` (enum, optional), `categories` (string[], optional) |
+| 9 | `update-task` | Update an existing task | `listId` (string, **required**), `taskId` (string, **required**), `title` (string, optional), `body` (string, optional), `dueDateTime` (string, optional), `reminderDateTime` (string, optional), `importance` (enum, optional), `startDateTime` (string, optional), `status` (enum, optional), `categories` (string[], optional) |
+| 10 | `delete-task` | Delete a task | `listId` (string, **required**), `taskId` (string, **required**) |
+| 11 | `complete-task` | Mark a task as completed | `listId` (string, **required**), `taskId` (string, **required**) |
+| 12 | `list-checklist-items` | List checklist items (sub-steps) of a task | `listId` (string, **required**), `taskId` (string, **required**) |
+| 13 | `create-checklist-item` | Create a checklist item (sub-step) on a task | `listId` (string, **required**), `taskId` (string, **required**), `displayName` (string, **required**), `isChecked` (boolean, optional) |
+| 14 | `update-checklist-item` | Update a checklist item (sub-step) | `listId` (string, **required**), `taskId` (string, **required**), `checklistItemId` (string, **required**), `displayName` (string, optional), `isChecked` (boolean, optional) |
+| 15 | `delete-checklist-item` | Delete a checklist item (sub-step) | `listId` (string, **required**), `taskId` (string, **required**), `checklistItemId` (string, **required**) |
 
 ### Enum Values
 
@@ -85,18 +87,37 @@ The server exposes 13 tools across three categories.
 
 - Date fields (`dueDateTime`, `reminderDateTime`, `startDateTime`) accept ISO 8601 date strings.
 - When updating a task, pass an empty string for a date field to clear it.
+- All parameters include descriptive annotations for improved LLM tool-calling accuracy.
+- The `list-tasks` tool supports OData `$filter` and `$orderby` expressions for advanced querying (e.g., `filter: "contains(title, 'milk')"`, `orderby: "dueDateTime/dateTime asc"`).
+- Results from `list-tasks` default to 100 items. Use the `top` parameter to adjust.
 
 ### Task List Tools
 
-Tools 1–4 manage task lists (containers for tasks).
+Tools 1–5 manage task lists (containers for tasks).
 
 ### Task Tools
 
-Tools 5–9 manage tasks within a task list. Use `list-task-lists` first to obtain a `listId`.
+Tools 6–11 manage tasks within a task list. Use `list-task-lists` first to obtain a `listId`.
 
 ### Checklist Item Tools
 
-Tools 10–13 manage checklist items (sub-steps) within a task. You need both a `listId` and a `taskId`.
+Tools 12–15 manage checklist items (sub-steps) within a task. You need both a `listId` and a `taskId`.
+
+### Error Responses
+
+When a Graph API error occurs, MCP tools return structured JSON error details:
+
+```json
+{
+  "error": true,
+  "statusCode": 404,
+  "code": "ErrorItemNotFound",
+  "message": "Graph API error 404: ErrorItemNotFound - The specified object was not found in the store.",
+  "retryable": false
+}
+```
+
+The `retryable` field indicates whether the error is transient (429 rate limit or 5xx server error) and safe to retry.
 
 ## Example Agent Conversations
 

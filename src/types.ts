@@ -90,3 +90,14 @@ export interface ListTasksOptions {
   select?: string;
   filter?: string;
 }
+
+/** Validates that a Graph API resource ID contains only safe characters. */
+export function validateId(value: string, name: string): void {
+  if (!value) throw new Error(`${name} is required`);
+  if (!/^[A-Za-z0-9_=\-]+$/.test(value)) {
+    throw new Error(`Invalid ${name}: contains disallowed characters`);
+  }
+}
+
+export const VALID_STATUSES: TaskStatus[] = ['notStarted', 'inProgress', 'completed', 'waitingOnOthers', 'deferred'];
+export const VALID_IMPORTANCES: TaskImportance[] = ['low', 'normal', 'high'];

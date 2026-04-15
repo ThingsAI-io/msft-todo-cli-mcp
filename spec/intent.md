@@ -56,7 +56,7 @@ Two existing Microsoft To Do MCP servers were investigated. Full security audits
 | Dependencies | 82 direct | ~30 | **2 runtime** (`@modelcontextprotocol/sdk`, `zod`) |
 | MSAL | v1 (EOL) | v3 | **None — raw fetch + PKCE** |
 | Tests | None | None | **Yes (vitest)** |
-| Tools | 13 | 16 | **13** |
+| Tools | 13 | 16 | **15** |
 | Debug tools exposed | No | Yes | **No** |
 | Last commit | Mar 2025 (13mo) | Nov 2025 (5mo) | — |
 | License | **None** | MIT | MIT |
@@ -153,8 +153,8 @@ system/src/todo-mcp-server/
 │   │   ├── token-manager.ts  # Token load/save/refresh logic
 │   │   ├── token-store.ts    # Encrypted token persistence
 │   │   └── setup.ts          # One-time interactive OAuth PKCE flow
-│   ├── format.ts             # Output formatting (human-readable for CLI, structured for MCP)
-│   └── types.ts              # Shared TypeScript interfaces
+│   ├── format.ts             # Output formatting (human-readable for CLI, structured for MCP) + terminal output sanitization
+│   └── types.ts              # Shared TypeScript interfaces + input validation utilities
 └── tests/
     ├── graph-client.test.ts
     ├── token-manager.test.ts
@@ -281,7 +281,24 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 ---
 
-### 2. `create-task-list`
+### 2. `get-task-list`
+
+**Description:** Get a single task list by ID. Useful for confirming a list exists or retrieving its current name after an update.
+
+**Input schema:**
+```json
+{
+  "listId": { "type": "string", "description": "ID of the task list to retrieve" }
+}
+```
+
+**Graph API:** `GET /me/todo/lists/{listId}`
+
+**Response format:** List details including ID, name, and flags (default, shared).
+
+---
+
+### 3. `create-task-list`
 
 **Description:** Create a new task list in Microsoft To Do.
 
@@ -298,7 +315,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 ---
 
-### 3. `update-task-list`
+### 4. `update-task-list`
 
 **Description:** Rename an existing task list.
 
@@ -316,7 +333,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 ---
 
-### 4. `delete-task-list`
+### 5. `delete-task-list`
 
 **Description:** Delete a task list and all tasks within it. Irreversible.
 
@@ -333,7 +350,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 ---
 
-### 5. `list-tasks`
+### 6. `list-tasks`
 
 **Description:** Get tasks from a specific list. Supports filtering by status, sorting by due date, and pagination.
 
@@ -342,7 +359,9 @@ Base URL: `https://graph.microsoft.com/v1.0`
 {
   "listId": { "type": "string", "description": "ID of the task list" },
   "status": { "type": "string", "enum": ["notStarted", "inProgress", "completed", "waitingOnOthers", "deferred"], "description": "Filter by task status", "optional": true },
-  "top": { "type": "number", "description": "Maximum number of tasks to return", "optional": true }
+  "top": { "type": "number", "description": "Maximum number of tasks to return (default: 100)", "optional": true },
+  "filter": { "type": "string", "description": "OData $filter expression for advanced querying", "optional": true },
+  "orderby": { "type": "string", "description": "OData $orderby expression for sorting results", "optional": true }
 }
 ```
 
@@ -352,7 +371,25 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 ---
 
-### 6. `create-task`
+### 7. `get-task`
+
+**Description:** Get a single task by ID. Essential for confirming state after mutations (create, update, complete) — agents should read back after writes.
+
+**Input schema:**
+```json
+{
+  "listId": { "type": "string", "description": "ID of the task list" },
+  "taskId": { "type": "string", "description": "ID of the task to retrieve" }
+}
+```
+
+**Graph API:** `GET /me/todo/lists/{listId}/tasks/{taskId}`
+
+**Response format:** Full task details including title, status, due date, importance, body, and metadata.
+
+---
+
+### 8. `create-task`
 
 **Description:** Create a new task in a list. Supports title, body, due date, reminder, importance, and status.
 
@@ -377,7 +414,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 ---
 
-### 7. `update-task`
+### 9. `update-task`
 
 **Description:** Update any properties of an existing task — title, status, due date, reminder, importance, body, categories.
 
@@ -403,7 +440,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 ---
 
-### 8. `delete-task`
+### 10. `delete-task`
 
 **Description:** Delete a task and all its checklist items. Irreversible.
 
@@ -421,7 +458,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 ---
 
-### 9. `complete-task`
+### 11. `complete-task`
 
 **Description:** Mark a task as completed. Convenience wrapper that sets `status: "completed"`. Designed for quick CoS-driven task closure during accountability check-ins.
 
@@ -439,7 +476,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 ---
 
-### 10. `list-checklist-items`
+### 12. `list-checklist-items`
 
 **Description:** Get the checklist items (sub-steps) for a task.
 
@@ -457,7 +494,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 ---
 
-### 11. `create-checklist-item`
+### 13. `create-checklist-item`
 
 **Description:** Add a checklist sub-step to a task.
 
@@ -477,7 +514,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 ---
 
-### 12. `update-checklist-item`
+### 14. `update-checklist-item`
 
 **Description:** Update a checklist item's text or checked status.
 
@@ -498,7 +535,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 ---
 
-### 13. `delete-checklist-item`
+### 15. `delete-checklist-item`
 
 **Description:** Delete a checklist item from a task.
 
@@ -633,6 +670,13 @@ Encryption approach:
 10. **URL construction safety** — `listId`, `taskId`, `checklistItemId` must be validated as non-empty strings; construct Graph API URLs safely (no template literal injection of unvalidated user input into path segments)
 11. **Token refresh race condition** — ensure concurrent requests don't trigger parallel refreshes (use a mutex/promise cache)
 12. **Localhost auth server is ephemeral** — starts only for auth flow, shuts down immediately after
+13. **ID format validation** — validate all resource IDs against a strict allowlist pattern before URL interpolation to prevent path traversal attacks (e.g., a crafted ID like `../../beta/users` targeting unintended endpoints)
+14. **OData injection protection** — validate enum inputs (`status`, `importance`) against allowed values before interpolating into OData `$filter` expressions
+15. **Terminal output sanitization** — strip ANSI escape sequences and control characters from all Graph API response content before terminal rendering to prevent escape injection attacks
+16. **OAuth state parameter** — include a cryptographic `state` nonce in authorization requests and verify it on callback to prevent CSRF attacks
+17. **Token file permissions** — set restrictive file permissions on the token storage file and directory (owner-only access on POSIX systems)
+18. **No redirect following** — use `redirect: 'error'` on all HTTP requests to prevent the Bearer token from leaking via server-side redirects to unexpected domains
+19. **Rate-limit resilience** — automatically retry on HTTP 429 responses, respecting the `Retry-After` header with exponential backoff
 
 ## Project Setup
 
@@ -715,7 +759,7 @@ system/src/todo-mcp-server/
     "esModuleInterop": true,
     "skipLibCheck": true,
     "declaration": true,
-    "sourceMap": true
+    "sourceMap": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests"]
@@ -729,6 +773,11 @@ node_modules/
 dist/
 *.enc
 .env
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
 ```
 
 ## Implementation Order
@@ -739,7 +788,10 @@ dist/
 
 3. **Graph API client** — Build `src/graph/client.ts`:
    - `makeGraphRequest<T>(url, token, method?, body?)` function using `fetch()`
+   - Use `redirect: 'error'` to prevent credential leaking via redirects
    - Automatic 401 retry with token refresh callback
+   - Automatic 429 retry with `Retry-After` header support and exponential backoff
+   - Structured error class (`GraphApiError`) with status code, error code, and retry/auth/not-found classification
    - Log only status codes, never response bodies
    - Validate HTTP status codes and return typed results
 
@@ -747,6 +799,7 @@ dist/
    - `encrypt(data: TokenData): Buffer` and `decrypt(buffer: Buffer): TokenData`
    - AES-256-GCM with machine-derived key
    - `save(tokens: TokenData)` and `load(): TokenData | null`
+   - Set restrictive file permissions on token file and directory (owner-only on POSIX)
    - Write tests for encrypt/decrypt round-trip
 
 5. **Token manager** — Build `src/auth/token-manager.ts`:
@@ -758,12 +811,13 @@ dist/
 
 6. **Auth setup CLI** — Build `src/auth/setup.ts`:
    - PKCE code verifier/challenge generation
+   - Cryptographic `state` parameter for CSRF protection on the OAuth callback
    - Ephemeral `http.createServer()` on port 3847
    - Open system browser (`child_process.exec` with platform detection)
    - Exchange code for tokens
    - Encrypt and save tokens
    - Print MCP configuration snippet
-   - Write test for PKCE generation
+   - Write test for PKCE generation and state verification
 
 7. **Core operations — task lists** — Build `src/core/task-lists.ts`:
    - Pure functions: `listTaskLists()`, `createTaskList()`, `updateTaskList()`, `deleteTaskList()`
@@ -781,8 +835,11 @@ dist/
 
 10. **CLI entry point** — Build `src/cli.ts`:
     - Parse args with a lightweight approach (Node.js `parseArgs` from `node:util` — zero dependencies)
+    - Use `strict: true` on all `parseArgs` calls to reject unknown flags
     - Route commands to core functions
+    - Validate enum inputs (`--status`, `--importance`) with clear error messages listing valid values
     - Human-readable output formatting (tables, status icons)
+    - `--version` command to print the current version
     - Usage: `todo <command> [options]`
     - Commands mirror core operations:
       ```
@@ -803,7 +860,9 @@ dist/
 
 11. **MCP server module** — Build `src/mcp.ts`:
     - Exports `startMcpServer()` — called by `cli.ts` when `todo serve` is invoked
-    - Create `McpServer`, register 13 tools, each calls the corresponding core function
+    - Create `McpServer`, register 15 tools, each calls the corresponding core function
+    - All Zod parameters must include `.describe()` annotations for LLM tool-calling accuracy
+    - Return structured JSON error details on failures (status code, error code, retryable flag) — not just error strings
     - Wire up `StdioServerTransport`
     - ~50-100 lines of code — all logic lives in core
     - Manual smoke test: run via `echo '...' | todo serve`
@@ -832,10 +891,11 @@ dist/
 |---|---|
 | `token-store.ts` | Encrypt/decrypt round-trip; corrupted file handling; missing file returns null |
 | `token-manager.ts` | Env var override; file-based token load; token refresh flow (mock fetch); mutex prevents concurrent refresh; expired token triggers refresh |
-| `graph/client.ts` | Request construction (URL, headers, body); 401 retry logic; error response handling; no response body in logs |
-| `core/*.ts` | Input validation; request body construction for Graph API; response formatting |
-| `cli.ts` | Arg parsing; command routing; output formatting |
-| `auth/setup.ts` | PKCE verifier/challenge generation; code challenge is valid base64url SHA-256 |
+| `graph/client.ts` | Request construction (URL, headers, body); 401 retry logic; 429 rate-limit retry; redirect policy; structured error class; error response handling; no response body in logs |
+| `core/*.ts` | Input validation (ID format, enum values); request body construction for Graph API; response formatting |
+| `cli.ts` | Arg parsing; command routing; output formatting; strict mode rejects unknown flags; enum validation |
+| `auth/setup.ts` | PKCE verifier/challenge generation; code challenge is valid base64url SHA-256; state parameter generation and verification |
+| `format.ts` | Terminal output sanitization strips ANSI escapes and control characters |
 
 ### Integration Tests (manual, with real Azure AD app)
 
@@ -855,13 +915,13 @@ dist/
 - [ ] `npm test` passes — all unit tests green
 - [ ] `npm run setup` completes OAuth PKCE flow and stores encrypted tokens
 - [ ] `npm start` runs CLI; `todo serve` launches MCP server on stdio
-- [ ] CLI commands work for all 13 operations:
+- [ ] CLI commands work for all 15 operations:
 - [ ] MCP tools are registered and functional (thin wrapper over CLI core):
   ```
-  todo lists / todo tasks / todo checklist — all CRUD operations
+  todo lists / todo tasks / todo checklist — all CRUD operations + single-item get
   ```
-  - `list-task-lists`, `create-task-list`, `update-task-list`, `delete-task-list`
-  - `list-tasks`, `create-task`, `update-task`, `delete-task`, `complete-task`
+  - `list-task-lists`, `get-task-list`, `create-task-list`, `update-task-list`, `delete-task-list`
+  - `list-tasks`, `get-task`, `create-task`, `update-task`, `delete-task`, `complete-task`
   - `list-checklist-items`, `create-checklist-item`, `update-checklist-item`, `delete-checklist-item`
 - [ ] Token storage is encrypted (not plaintext JSON)
 - [ ] No PII or task content in logs (grep stderr output during operation)

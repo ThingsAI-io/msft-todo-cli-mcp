@@ -86,9 +86,9 @@ export function decrypt(buffer: Buffer): TokenData {
 
 export function save(tokens: TokenData): void {
   const filePath = getTokenPath();
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.mkdirSync(path.dirname(filePath), { recursive: true, mode: 0o700 });
   const encrypted = encrypt(tokens);
-  fs.writeFileSync(filePath, encrypted);
+  fs.writeFileSync(filePath, encrypted, { mode: 0o600 });
 }
 
 export function load(): TokenData | null {

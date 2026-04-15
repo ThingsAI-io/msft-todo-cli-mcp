@@ -140,3 +140,10 @@ vite.config.ts.timestamp-*
 
 # Encrypted token files
 *.enc
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt

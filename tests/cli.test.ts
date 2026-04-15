@@ -151,7 +151,7 @@ describe('CLI command routing', () => {
 
   it('5. tasks --list routes to listTasks', async () => {
     await run(['tasks', '--list', 'list-123']);
-    expect(listTasks).toHaveBeenCalledWith(expect.anything(), 'list-123');
+    expect(listTasks).toHaveBeenCalledWith(expect.anything(), 'list-123', { status: undefined });
   });
 
   it('6. tasks create with minimal args routes to createTask', async () => {
