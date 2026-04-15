@@ -31,7 +31,8 @@ export function buildAuthorizationUrl(
   clientId: string,
   tenant: string,
   codeChallenge: string,
-): string {
+): { url: string; state: string } {
+  const state = randomBytes(32).toString('hex');
   const base = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize`;
   const params = new URLSearchParams({
     client_id: clientId,
@@ -41,8 +42,9 @@ export function buildAuthorizationUrl(
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
     response_mode: "query",
+    state,
   });
-  return `${base}?${params.toString()}`;
+  return { url: `${base}?${params.toString()}`, state };
 }
 
 function openBrowser(url: string): void {
@@ -81,8 +83,16 @@ async function exchangeCodeForTokens(
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Token exchange failed (${res.status}): ${text}`);
+    let errorDetail = `status ${res.status}`;
+    try {
+      const errorBody = await res.json() as { error?: string; error_description?: string };
+      if (errorBody.error) {
+        errorDetail = `${errorBody.error}: ${errorBody.error_description ?? 'Unknown error'}`;
+      }
+    } catch {
+      // Could not parse error body
+    }
+    throw new Error(`Token exchange failed: ${errorDetail}`);
   }
 
   return (await res.json()) as {
@@ -116,7 +126,7 @@ export async function runSetup(options?: { clientId?: string; tenant?: string; s
 
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
-  const authUrl = buildAuthorizationUrl(clientId, tenant, codeChallenge);
+  const { url: authUrl, state } = buildAuthorizationUrl(clientId, tenant, codeChallenge);
 
   await new Promise<void>((resolve, reject) => {
     const server = createServer(
@@ -126,6 +136,15 @@ export async function runSetup(options?: { clientId?: string; tenant?: string; s
           if (url.pathname !== "/callback") {
             res.writeHead(404);
             res.end("Not found");
+            return;
+          }
+
+          const returnedState = url.searchParams.get("state");
+          if (returnedState !== state) {
+            res.writeHead(400, { "Content-Type": "text/html" });
+            res.end("<h1>Error: Invalid state parameter</h1><p>Possible CSRF attack.</p>");
+            reject(new Error("Authorization failed: state parameter mismatch"));
+            server.close();
             return;
           }
 
