@@ -118,11 +118,11 @@ After the core implementation, additional passes covered:
 
 ## Stats
 
-- **106 unit tests** across 7 test files
+- **115 unit tests** across 7 test files
 - **2 runtime dependencies** (`@modelcontextprotocol/sdk`, `zod`)
-- **13 MCP tools** + full CLI
+- **15 MCP tools** + full CLI
 - **19.2 kB** packed npm package
-- **14 sub-agents** used total (7 code + 1 README + 6 docs)
+- **23 sub-agents** used total (7 code + 1 README + 6 docs + 5 audit + 3 implementation + 1 test fix)
 
 ### Agent Timing
 
@@ -152,4 +152,43 @@ After testing the initial release, several gaps were discovered that required fo
 | Versioning & CHANGELOG | No mention of semver, changelog format, or version sync between `package.json` and `mcp.ts` | New section after Definition of Done |
 
 This "push-back-to-spec" cycle is a useful pattern: build from the spec, discover what's missing during real usage, then amend the spec so future builds from it are complete. The spec becomes a living document that improves with each implementation pass.
+
+## Phase 5: Security Audit & DX Improvements (v0.2.0)
+
+A full security audit and developer experience evaluation was conducted using fleet mode — 5 parallel audit agents followed by 8 parallel implementation agents.
+
+### Audit Phase
+
+Five specialized agents audited different aspects of the codebase simultaneously:
+
+| Agent | Focus Area | Key Findings |
+|-------|-----------|-------------|
+| Auth Security | OAuth flow, token storage | Missing CSRF state param, no file permissions on token file |
+| Graph API Client | HTTP client hardening | No redirect policy (Bearer token leak risk), no rate-limit handling, unstructured errors |
+| CLI/MCP Input Handling | Input validation, output safety | No ID validation (path traversal risk), no OData injection protection, no terminal escape sanitization |
+| Dependencies & Config | Build config, gitignore | Source maps published to npm, no key file patterns in .gitignore |
+| DX Evaluation | AI developer experience | Missing `.describe()` on MCP params, no single-item get tools, no structured error responses, no `--version` |
+
+Result: 5 Medium, 7 Low, 3 Informational findings. DX score: B+ (good foundation, missing polish for AI consumers).
+
+### Implementation Phase
+
+Fixes were applied in 3 dependency-ordered waves using parallel agents:
+
+**Wave 1** (5 agents, independent files): Graph client hardening, core ID validation, format sanitization, auth hardening, config fixes
+
+**Wave 2** (2 agents, depends on Wave 1): MCP DX improvements (15 tools, `.describe()`, structured errors, filter/orderby), CLI DX (strict parsing, `--version`, enum validation, `--unchecked`)
+
+**Wave 3** (1 agent): Test updates — fixed all broken tests, added new coverage. 106 → 115 tests.
+
+### Retrospective Spec Update
+
+After implementation, `spec/intent.md` was retroactively updated with the security and DX requirements that a PM would have specified upfront — expressed as principles and guardrails rather than implementation details. This follows the same push-back-to-spec pattern from Phase 4.
+
+### Updated Stats
+
+- **115 unit tests** across 7 test files (was 106)
+- **15 MCP tools** + full CLI (was 13)
+- **23 sub-agents** used total across all phases (was 14)
+- **v0.2.0** released with all security and DX improvements
 
