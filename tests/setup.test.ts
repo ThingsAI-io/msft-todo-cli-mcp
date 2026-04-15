@@ -51,21 +51,33 @@ describe("generateCodeChallenge", () => {
 
 describe("buildAuthorizationUrl", () => {
   it("contains all required parameters", () => {
-    const url = buildAuthorizationUrl("my-client-id", "consumers", "my-challenge");
+    const result = buildAuthorizationUrl("my-client-id", "consumers", "my-challenge");
 
-    expect(url).toContain("client_id=my-client-id");
-    expect(url).toContain("response_type=code");
-    expect(url).toContain("redirect_uri=");
-    expect(url).toContain("scope=");
-    expect(url).toContain("Tasks.ReadWrite");
-    expect(url).toContain("offline_access");
-    expect(url).toContain("code_challenge=my-challenge");
-    expect(url).toContain("code_challenge_method=S256");
-    expect(url).toContain("response_mode=query");
+    expect(result.url).toContain("client_id=my-client-id");
+    expect(result.url).toContain("response_type=code");
+    expect(result.url).toContain("redirect_uri=");
+    expect(result.url).toContain("scope=");
+    expect(result.url).toContain("Tasks.ReadWrite");
+    expect(result.url).toContain("offline_access");
+    expect(result.url).toContain("code_challenge=my-challenge");
+    expect(result.url).toContain("code_challenge_method=S256");
+    expect(result.url).toContain("response_mode=query");
+    expect(result.state).toBeTruthy();
   });
 
   it("uses the correct tenant in the base URL", () => {
-    const url = buildAuthorizationUrl("cid", "my-tenant", "ch");
-    expect(url).toContain("login.microsoftonline.com/my-tenant/oauth2/v2.0/authorize");
+    const result = buildAuthorizationUrl("cid", "my-tenant", "ch");
+    expect(result.url).toContain("login.microsoftonline.com/my-tenant/oauth2/v2.0/authorize");
+  });
+
+  it("includes state parameter in the URL", () => {
+    const result = buildAuthorizationUrl("cid", "consumers", "ch");
+    expect(result.url).toContain("state=" + result.state);
+  });
+
+  it("produces different state values on different calls", () => {
+    const r1 = buildAuthorizationUrl("cid", "consumers", "ch");
+    const r2 = buildAuthorizationUrl("cid", "consumers", "ch");
+    expect(r1.state).not.toBe(r2.state);
   });
 });

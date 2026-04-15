@@ -6,6 +6,7 @@ import { createMcpServer } from '../src/mcp.js';
 // Mock all core modules
 vi.mock('../src/core/task-lists.js', () => ({
   listTaskLists: vi.fn(),
+  getTaskList: vi.fn(),
   createTaskList: vi.fn(),
   updateTaskList: vi.fn(),
   deleteTaskList: vi.fn(),
@@ -13,6 +14,7 @@ vi.mock('../src/core/task-lists.js', () => ({
 
 vi.mock('../src/core/tasks.js', () => ({
   listTasks: vi.fn(),
+  getTask: vi.fn(),
   createTask: vi.fn(),
   updateTask: vi.fn(),
   deleteTask: vi.fn(),
@@ -51,7 +53,7 @@ describe('MCP Server', () => {
     vi.clearAllMocks();
   });
 
-  it('registers all 13 tools', async () => {
+  it('registers all 15 tools', async () => {
     const { client } = await setup();
     const { tools } = await client.listTools();
     const names = tools.map(t => t.name).sort();
@@ -63,6 +65,8 @@ describe('MCP Server', () => {
       'delete-checklist-item',
       'delete-task',
       'delete-task-list',
+      'get-task',
+      'get-task-list',
       'list-checklist-items',
       'list-task-lists',
       'list-tasks',

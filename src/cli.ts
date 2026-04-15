@@ -13,6 +13,7 @@ import {
   formatTask, formatTaskList, formatChecklistItem,
 } from './format.js';
 import type { CreateTaskInput, UpdateTaskInput, TaskImportance, TaskStatus } from './types.js';
+import { VALID_STATUSES, VALID_IMPORTANCES } from './types.js';
 
 const USAGE = `Usage: todo <command> [options]
 
@@ -37,12 +38,14 @@ Commands:
   checklist --list <id> --task <id>  List checklist items
   checklist add --list <id> --task <id> --text "..."
   checklist update --list <id> --task <id> --item <id>
-    [--text <text>] [--checked]
+    [--text <text>] [--checked] [--unchecked]
   checklist delete --list <id> --task <id> --item <id>
   help                               Show this help
+  version                            Show version
 
 Global flags:
-  --json    Output in JSON format
+  --json     Output in JSON format
+  --version  Show version number
 `;
 
 function getClient(): GraphClient {
@@ -57,6 +60,11 @@ export async function run(args: string[]): Promise<void> {
     return;
   }
 
+  if (resource === '--version' || resource === 'version') {
+    console.log('0.1.1');
+    return;
+  }
+
   if (resource === 'setup') {
     const { values: setupValues } = parseArgs({
       args: args.slice(1),
@@ -64,7 +72,7 @@ export async function run(args: string[]): Promise<void> {
         'client-id': { type: 'string' },
         tenant: { type: 'string' },
       },
-      strict: false,
+      strict: true,
       allowPositionals: true,
     });
     await runSetup({
@@ -104,7 +112,7 @@ async function handleLists(args: string[]): Promise<void> {
   const { values } = parseArgs({
     args,
     options: { json: { type: 'boolean', default: false } },
-    strict: false,
+    strict: true,
     allowPositionals: true,
   });
   const json = values.json as boolean;
@@ -172,7 +180,7 @@ async function handleTasks(args: string[]): Promise<void> {
       categories: { type: 'string' },
       json: { type: 'boolean', default: false },
     },
-    strict: false,
+    strict: true,
     allowPositionals: true,
   });
 
@@ -186,8 +194,13 @@ async function handleTasks(args: string[]): Promise<void> {
   }
 
   if (!action || action.startsWith('--')) {
-    const tasks = await listTasks(client, listId);
-    console.log(formatTasks(tasks, json));
+    const statusFilter = values.status as string | undefined;
+    if (statusFilter && !VALID_STATUSES.includes(statusFilter as TaskStatus)) {
+      console.error(`Error: Invalid status "${statusFilter}". Valid values: ${VALID_STATUSES.join(', ')}`);
+      process.exit(1);
+    }
+    const tasksList = await listTasks(client, listId, { status: statusFilter as TaskStatus | undefined });
+    console.log(formatTasks(tasksList, json));
     return;
   }
 
@@ -199,11 +212,23 @@ async function handleTasks(args: string[]): Promise<void> {
     }
     const input: CreateTaskInput = { title };
     if (values.due) input.dueDateTime = values.due as string;
-    if (values.importance) input.importance = values.importance as TaskImportance;
+    if (values.importance) {
+      if (!VALID_IMPORTANCES.includes(values.importance as TaskImportance)) {
+        console.error(`Error: Invalid importance "${values.importance}". Valid values: ${VALID_IMPORTANCES.join(', ')}`);
+        process.exit(1);
+      }
+      input.importance = values.importance as TaskImportance;
+    }
     if (values.body) input.body = values.body as string;
     if (values.reminder) input.reminderDateTime = values.reminder as string;
     if (values.start) input.startDateTime = values.start as string;
-    if (values.status) input.status = values.status as TaskStatus;
+    if (values.status) {
+      if (!VALID_STATUSES.includes(values.status as TaskStatus)) {
+        console.error(`Error: Invalid status "${values.status}". Valid values: ${VALID_STATUSES.join(', ')}`);
+        process.exit(1);
+      }
+      input.status = values.status as TaskStatus;
+    }
     if (values.categories) input.categories = (values.categories as string).split(',');
 
     const task = await createTask(client, listId, input);
@@ -220,11 +245,23 @@ async function handleTasks(args: string[]): Promise<void> {
     const input: UpdateTaskInput = {};
     if (values.title) input.title = values.title as string;
     if (values.due) input.dueDateTime = values.due as string;
-    if (values.importance) input.importance = values.importance as TaskImportance;
+    if (values.importance) {
+      if (!VALID_IMPORTANCES.includes(values.importance as TaskImportance)) {
+        console.error(`Error: Invalid importance "${values.importance}". Valid values: ${VALID_IMPORTANCES.join(', ')}`);
+        process.exit(1);
+      }
+      input.importance = values.importance as TaskImportance;
+    }
     if (values.body) input.body = values.body as string;
     if (values.reminder) input.reminderDateTime = values.reminder as string;
     if (values.start) input.startDateTime = values.start as string;
-    if (values.status) input.status = values.status as TaskStatus;
+    if (values.status) {
+      if (!VALID_STATUSES.includes(values.status as TaskStatus)) {
+        console.error(`Error: Invalid status "${values.status}". Valid values: ${VALID_STATUSES.join(', ')}`);
+        process.exit(1);
+      }
+      input.status = values.status as TaskStatus;
+    }
     if (values.categories) input.categories = (values.categories as string).split(',');
 
     const task = await updateTask(client, listId, taskId, input);
@@ -269,9 +306,10 @@ async function handleChecklist(args: string[]): Promise<void> {
       item: { type: 'string' },
       text: { type: 'string' },
       checked: { type: 'boolean', default: false },
+      unchecked: { type: 'boolean', default: false },
       json: { type: 'boolean', default: false },
     },
-    strict: false,
+    strict: true,
     allowPositionals: true,
   });
 
@@ -311,6 +349,7 @@ async function handleChecklist(args: string[]): Promise<void> {
     const updates: { displayName?: string; isChecked?: boolean } = {};
     if (values.text) updates.displayName = values.text as string;
     if (values.checked) updates.isChecked = true;
+    else if (values.unchecked) updates.isChecked = false;
     const item = await updateChecklistItem(client, listId, taskId, itemId, updates);
     console.log(formatChecklistItem(item, json));
     return;

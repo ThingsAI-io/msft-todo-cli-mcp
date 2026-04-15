@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { GraphClient } from '../src/graph/client.js';
+import { GraphClient, GraphApiError } from '../src/graph/client.js';
 
 describe('GraphClient', () => {
   let mockGetToken: ReturnType<typeof vi.fn>;
@@ -26,6 +26,7 @@ describe('GraphClient', () => {
   function jsonResponse(data: unknown, status = 200): Response {
     return {
       status,
+      headers: new Headers(),
       json: () => Promise.resolve(data),
     } as Response;
   }
@@ -33,6 +34,7 @@ describe('GraphClient', () => {
   function errorResponse(status: number, code: string, message: string): Response {
     return {
       status,
+      headers: new Headers(),
       json: () => Promise.resolve({ error: { code, message } }),
     } as Response;
   }
@@ -211,6 +213,43 @@ describe('GraphClient', () => {
     expect(parsed.searchParams.get('$filter')).toBe("status eq 'completed'");
     expect(parsed.searchParams.get('$top')).toBe('10');
     expect(url.startsWith('https://graph.microsoft.com/v1.0/me/todo/lists/1/tasks')).toBe(true);
+  });
+
+  // 16. redirect: 'error' in fetch options
+  it('sets redirect to error in fetch options', async () => {
+    mockFetch.mockResolvedValue(jsonResponse({ id: '1' }));
+    await client.request('GET', '/me/todo/lists');
+    const [, options] = mockFetch.mock.calls[0];
+    expect(options.redirect).toBe('error');
+  });
+
+  // 17. GraphApiError with structured fields
+  it('throws GraphApiError with structured fields', async () => {
+    mockFetch.mockResolvedValue(errorResponse(404, 'ResourceNotFound', 'Not found'));
+    try {
+      await client.request('GET', '/me/todo/lists/bad');
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(GraphApiError);
+      const e = err as GraphApiError;
+      expect(e.statusCode).toBe(404);
+      expect(e.errorCode).toBe('ResourceNotFound');
+      expect(e.isNotFound).toBe(true);
+      expect(e.isRetryable).toBe(false);
+      expect(e.isAuthError).toBe(false);
+    }
+  });
+
+  // 18. 429 retry with Retry-After header
+  it('retries on 429 with Retry-After header', async () => {
+    const headers429 = new Headers({ 'Retry-After': '0' });
+    mockFetch
+      .mockResolvedValueOnce({ status: 429, headers: headers429, json: () => Promise.resolve({ error: { code: 'TooManyRequests', message: 'Rate limited' } }) } as Response)
+      .mockResolvedValueOnce(jsonResponse({ id: '1' }));
+
+    const result = await client.request('GET', '/me/todo/lists');
+    expect(result).toEqual({ id: '1' });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
   // DELETE has no body

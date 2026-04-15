@@ -1,5 +1,5 @@
 import { GraphClient } from '../graph/client.js';
-import { TodoTask, CreateTaskInput, UpdateTaskInput, ListTasksOptions, GraphResponse, GraphDateTime } from '../types.js';
+import { TodoTask, CreateTaskInput, UpdateTaskInput, ListTasksOptions, GraphResponse, GraphDateTime, validateId, VALID_STATUSES } from '../types.js';
 
 export function toGraphDateTime(isoString: string): GraphDateTime {
   const date = new Date(isoString);
@@ -9,19 +9,23 @@ export function toGraphDateTime(isoString: string): GraphDateTime {
 }
 
 export async function listTasks(client: GraphClient, listId: string, options?: ListTasksOptions): Promise<TodoTask[]> {
-  if (!listId) throw new Error('listId is required');
+  validateId(listId, 'listId');
 
   const queryParams: Record<string, string> = {};
   if (options) {
     if (options.filter) {
       queryParams['$filter'] = options.filter;
     } else if (options.status) {
+      if (!VALID_STATUSES.includes(options.status)) {
+        throw new Error(`Invalid status: ${options.status}`);
+      }
       queryParams['$filter'] = `status eq '${options.status}'`;
     }
     if (options.orderby) queryParams['$orderby'] = options.orderby;
     if (options.top !== undefined) queryParams['$top'] = String(options.top);
     if (options.select) queryParams['$select'] = options.select;
   }
+  if (!queryParams['$top']) queryParams['$top'] = '100';
 
   const response = await client.request<GraphResponse<TodoTask>>(
     'GET',
@@ -32,8 +36,16 @@ export async function listTasks(client: GraphClient, listId: string, options?: L
   return response?.value ?? [];
 }
 
+export async function getTask(client: GraphClient, listId: string, taskId: string): Promise<TodoTask> {
+  validateId(listId, 'listId');
+  validateId(taskId, 'taskId');
+  const response = await client.request<TodoTask>('GET', `/me/todo/lists/${listId}/tasks/${taskId}`);
+  if (!response) throw new Error('Unexpected empty response');
+  return response;
+}
+
 export async function createTask(client: GraphClient, listId: string, input: CreateTaskInput): Promise<TodoTask> {
-  if (!listId) throw new Error('listId is required');
+  validateId(listId, 'listId');
   if (!input.title) throw new Error('title is required');
 
   const body: Record<string, unknown> = { title: input.title };
@@ -66,8 +78,8 @@ export async function createTask(client: GraphClient, listId: string, input: Cre
 }
 
 export async function updateTask(client: GraphClient, listId: string, taskId: string, input: UpdateTaskInput): Promise<TodoTask> {
-  if (!listId) throw new Error('listId is required');
-  if (!taskId) throw new Error('taskId is required');
+  validateId(listId, 'listId');
+  validateId(taskId, 'taskId');
 
   const body: Record<string, unknown> = {};
 
@@ -98,14 +110,14 @@ export async function updateTask(client: GraphClient, listId: string, taskId: st
 }
 
 export async function deleteTask(client: GraphClient, listId: string, taskId: string): Promise<void> {
-  if (!listId) throw new Error('listId is required');
-  if (!taskId) throw new Error('taskId is required');
+  validateId(listId, 'listId');
+  validateId(taskId, 'taskId');
   await client.request('DELETE', `/me/todo/lists/${listId}/tasks/${taskId}`);
 }
 
 export async function completeTask(client: GraphClient, listId: string, taskId: string): Promise<TodoTask> {
-  if (!listId) throw new Error('listId is required');
-  if (!taskId) throw new Error('taskId is required');
+  validateId(listId, 'listId');
+  validateId(taskId, 'taskId');
   const response = await client.request<TodoTask>('PATCH', `/me/todo/lists/${listId}/tasks/${taskId}`, { status: 'completed' });
   return response!;
 }

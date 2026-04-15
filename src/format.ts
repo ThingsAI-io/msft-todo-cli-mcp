@@ -1,8 +1,14 @@
 import type { TodoTaskList, TodoTask, ChecklistItem } from './types.js';
 
+/** Strip ANSI escape sequences and control characters (except newline) to prevent terminal injection. */
+function sanitize(text: string): string {
+  // eslint-disable-next-line no-control-regex
+  return text.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace(/[\x00-\x09\x0b-\x1f\x7f]/g, '');
+}
+
 export function formatTaskList(list: TodoTaskList, json?: boolean): string {
   if (json) return JSON.stringify(list, null, 2);
-  let line = `ID: ${list.id}  Name: ${list.displayName}`;
+  let line = `ID: ${list.id}  Name: ${sanitize(list.displayName)}`;
   if (list.wellknownListName === 'defaultList') line += '  [DEFAULT]';
   if (list.isShared) line += '  [SHARED]';
   return line;
@@ -17,7 +23,7 @@ export function formatTaskLists(lists: TodoTaskList[], json?: boolean): string {
 export function formatTask(task: TodoTask, json?: boolean): string {
   if (json) return JSON.stringify(task, null, 2);
   const icon = task.status === 'completed' ? '✓' : '○';
-  let line = `${icon} ${task.title}  ID: ${task.id}`;
+  let line = `${icon} ${sanitize(task.title)}  ID: ${task.id}`;
   if (task.dueDateTime) {
     line += `  Due: ${task.dueDateTime.dateTime.split('T')[0]}`;
   }
@@ -26,9 +32,8 @@ export function formatTask(task: TodoTask, json?: boolean): string {
   }
   line += `  Status: ${task.status}`;
   if (task.body?.content) {
-    const preview = task.body.content.length > 50
-      ? task.body.content.slice(0, 50) + '…'
-      : task.body.content;
+    const raw = sanitize(task.body.content);
+    const preview = raw.length > 50 ? raw.slice(0, 50) + '…' : raw;
     line += `\n  Body: ${preview}`;
   }
   return line;
@@ -43,7 +48,7 @@ export function formatTasks(tasks: TodoTask[], json?: boolean): string {
 export function formatChecklistItem(item: ChecklistItem, json?: boolean): string {
   if (json) return JSON.stringify(item, null, 2);
   const icon = item.isChecked ? '✓' : '○';
-  return `${icon} ${item.displayName}  ID: ${item.id}`;
+  return `${icon} ${sanitize(item.displayName)}  ID: ${item.id}`;
 }
 
 export function formatChecklistItems(items: ChecklistItem[], json?: boolean): string {

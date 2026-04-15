@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GraphClient } from '../src/graph/client.js';
-import { listTaskLists, createTaskList, updateTaskList, deleteTaskList } from '../src/core/task-lists.js';
-import { listTasks, createTask, updateTask, deleteTask, completeTask, toGraphDateTime } from '../src/core/tasks.js';
+import { listTaskLists, getTaskList, createTaskList, updateTaskList, deleteTaskList } from '../src/core/task-lists.js';
+import { listTasks, getTask, createTask, updateTask, deleteTask, completeTask, toGraphDateTime } from '../src/core/tasks.js';
 import { listChecklistItems, createChecklistItem, updateChecklistItem, deleteChecklistItem } from '../src/core/checklist-items.js';
 
 const mockRequest = vi.fn();
@@ -69,7 +69,7 @@ describe('Tasks', () => {
 
     const result = await listTasks(client, 'list-1');
 
-    expect(mockRequest).toHaveBeenCalledWith('GET', '/me/todo/lists/list-1/tasks', undefined, undefined);
+    expect(mockRequest).toHaveBeenCalledWith('GET', '/me/todo/lists/list-1/tasks', undefined, { '$top': '100' });
     expect(result).toEqual([]);
   });
 
@@ -205,9 +205,37 @@ describe('Tasks', () => {
   it('updateTask throws if taskId is empty', async () => {
     await expect(updateTask(client, 'list-1', '', { title: 'X' })).rejects.toThrow('taskId is required');
   });
+
+  it('getTask calls GET with correct URL', async () => {
+    const task = { id: 'task-1', title: 'Test' };
+    mockRequest.mockResolvedValue(task);
+
+    const result = await getTask(client, 'list-1', 'task-1');
+
+    expect(mockRequest).toHaveBeenCalledWith('GET', '/me/todo/lists/list-1/tasks/task-1');
+    expect(result).toEqual(task);
+  });
+
+  it('listTasks with invalid status throws error', async () => {
+    await expect(listTasks(client, 'list-1', { status: 'bogus' })).rejects.toThrow('Invalid status');
+  });
 });
 
-// ── toGraphDateTime ─────────────────────────────────────────────────────
+// ── Task Lists (getTaskList) ────────────────────────────────────────────
+
+describe('Task Lists (getTaskList)', () => {
+  it('getTaskList calls GET with correct URL', async () => {
+    const list = { id: 'list-1', displayName: 'My List' };
+    mockRequest.mockResolvedValue(list);
+
+    const result = await getTaskList(client, 'list-1');
+
+    expect(mockRequest).toHaveBeenCalledWith('GET', '/me/todo/lists/list-1');
+    expect(result).toEqual(list);
+  });
+});
+
+// ── toGraphDateTime─────────────────────────────────────────────────────
 
 describe('toGraphDateTime', () => {
   it('converts ISO string to Graph format', () => {
