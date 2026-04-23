@@ -1,5 +1,5 @@
 {
-  "name": "@thingsai/todo-mcp-server",
+  "name": "@thingsai/msft-todo-cli-mcp",
   "version": "0.2.1",
   "description": "A CLI-first tool for managing Microsoft To Do tasks, with an optional MCP server wrapper",
   "type": "module",

@@ -1,6 +1,6 @@
 # Getting Started
 
-A 5-minute quickstart for `@thingsai/todo-mcp-server` — a CLI-first Microsoft To Do management tool with an optional MCP server for AI agents.
+A 5-minute quickstart for `@thingsai/msft-todo-cli-mcp` — a CLI-first Microsoft To Do management tool with an optional MCP server for AI agents.
 
 ## Prerequisites
 
@@ -11,7 +11,7 @@ A 5-minute quickstart for `@thingsai/todo-mcp-server` — a CLI-first Microsoft 
 ## Install
 
 ```bash
-npm install -g @thingsai/todo-mcp-server
+npm install -g @thingsai/msft-todo-cli-mcp
 ```
 
 Verify the installation:

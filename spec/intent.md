@@ -797,7 +797,7 @@ system/src/todo-mcp-server/
 
 ```json
 {
-  "name": "@thingsai/todo-mcp-server",
+  "name": "@thingsai/msft-todo-cli-mcp",
   "version": "0.1.0",
   "type": "module",
   "description": "CLI-first Microsoft To Do management with MCP server wrapper",

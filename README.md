@@ -1,4 +1,4 @@
-# @thingsai/todo-mcp-server
+# @thingsai/msft-todo-cli-mcp
 
 A **CLI-first** tool for managing Microsoft To Do tasks, with an optional MCP server for AI agents.
 
@@ -7,7 +7,7 @@ A **CLI-first** tool for managing Microsoft To Do tasks, with an optional MCP se
 ## Install
 
 ```bash
-npm install -g @thingsai/todo-mcp-server
+npm install -g @thingsai/msft-todo-cli-mcp
 ```
 
 ## Quick Start

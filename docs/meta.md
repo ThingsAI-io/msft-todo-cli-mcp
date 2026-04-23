@@ -1,6 +1,6 @@
 # Project Meta — How This Was Built
 
-This document captures how `@thingsai/todo-mcp-server` was created, from spec to working code, using GitHub Copilot CLI in a single session.
+This document captures how `@thingsai/msft-todo-cli-mcp` was created, from spec to working code, using GitHub Copilot CLI in a single session.
 
 ## Input Files
 
@@ -65,7 +65,7 @@ All 7 agents completed successfully. 106 tests passing, TypeScript clean, build 
 
 After the core implementation, additional passes covered:
 
-- **npm packaging** — scoped to `@thingsai/todo-mcp-server`, configured for publishing
+- **npm packaging** — scoped to `@thingsai/msft-todo-cli-mcp`, configured for publishing
 - **README** — concise intro with install, quick start, MCP config, and links to docs
 - **Documentation** — 6 doc pages created in parallel by dedicated agents:
   - Getting started, Azure setup (Portal + CLI), CLI reference, MCP integration, configuration, security
