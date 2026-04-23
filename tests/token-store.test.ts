@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -22,9 +22,14 @@ describe('token-store', () => {
     originalAppData = process.env['APPDATA'];
     // Point APPDATA to tmpDir so save/load use it on Windows
     process.env['APPDATA'] = tmpDir;
+    // On macOS/Linux, getTokenPath() uses os.homedir() — redirect to tmpDir
+    if (process.platform !== 'win32') {
+      vi.spyOn(os, 'homedir').mockReturnValue(tmpDir);
+    }
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     if (originalAppData !== undefined) {
       process.env['APPDATA'] = originalAppData;
     } else {
@@ -125,7 +130,10 @@ describe('token-store', () => {
 
     it('save creates parent directories', () => {
       save(sampleTokens);
-      const tokenDir = path.join(tmpDir, 'todo-mcp');
+      const tokenDir =
+        process.platform === 'win32'
+          ? path.join(tmpDir, 'todo-mcp')
+          : path.join(tmpDir, '.config', 'todo-mcp');
       expect(fs.existsSync(tokenDir)).toBe(true);
     });
   });
