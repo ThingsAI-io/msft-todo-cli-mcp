@@ -17,22 +17,28 @@ export class GraphApiError extends Error {
     super(`Graph API error ${statusCode}: ${errorCode} - ${message}`);
     this.name = 'GraphApiError';
   }
-  get isRetryable(): boolean { return this.statusCode === 429 || this.statusCode >= 500; }
-  get isNotFound(): boolean { return this.statusCode === 404; }
-  get isAuthError(): boolean { return this.statusCode === 401 || this.statusCode === 403; }
+  get isRetryable(): boolean {
+    return this.statusCode === 429 || this.statusCode >= 500;
+  }
+  get isNotFound(): boolean {
+    return this.statusCode === 404;
+  }
+  get isAuthError(): boolean {
+    return this.statusCode === 401 || this.statusCode === 403;
+  }
 }
 
 export class GraphClient {
   constructor(
     private getToken: () => Promise<string>,
-    private forceRefresh: () => Promise<string>
+    private forceRefresh: () => Promise<string>,
   ) {}
 
   async request<T>(
     method: string,
     path: string,
     body?: unknown,
-    queryParams?: Record<string, string>
+    queryParams?: Record<string, string>,
   ): Promise<T | undefined> {
     const token = await this.getToken();
     return this.executeRequest<T>(method, path, body, queryParams, token, false, 0);
@@ -45,7 +51,7 @@ export class GraphClient {
     queryParams: Record<string, string> | undefined,
     token: string,
     isRetry: boolean,
-    retryCount: number
+    retryCount: number,
   ): Promise<T | undefined> {
     const url = this.buildUrl(path, queryParams);
 
@@ -75,8 +81,16 @@ export class GraphClient {
       const delayMs = retryAfter
         ? Number(retryAfter) * 1000
         : Math.min(1000 * 2 ** retryCount, 30000);
-      await new Promise(r => setTimeout(r, delayMs));
-      return this.executeRequest<T>(method, path, body, queryParams, token, isRetry, retryCount + 1);
+      await new Promise((r) => setTimeout(r, delayMs));
+      return this.executeRequest<T>(
+        method,
+        path,
+        body,
+        queryParams,
+        token,
+        isRetry,
+        retryCount + 1,
+      );
     }
 
     if (status === 204) {

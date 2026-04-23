@@ -4,13 +4,27 @@ import { parseArgs } from 'node:util';
 import { getAccessToken, forceRefresh } from './auth/token-manager.js';
 import { runSetup } from './auth/setup.js';
 import { GraphClient } from './graph/client.js';
-import { listTaskLists, createTaskList, updateTaskList, deleteTaskList } from './core/task-lists.js';
+import {
+  listTaskLists,
+  createTaskList,
+  updateTaskList,
+  deleteTaskList,
+} from './core/task-lists.js';
 import { listTasks, createTask, updateTask, deleteTask, completeTask } from './core/tasks.js';
-import { listChecklistItems, createChecklistItem, updateChecklistItem, deleteChecklistItem } from './core/checklist-items.js';
+import {
+  listChecklistItems,
+  createChecklistItem,
+  updateChecklistItem,
+  deleteChecklistItem,
+} from './core/checklist-items.js';
 import { startMcpServer } from './mcp.js';
 import {
-  formatTaskLists, formatTasks, formatChecklistItems,
-  formatTask, formatTaskList, formatChecklistItem,
+  formatTaskLists,
+  formatTasks,
+  formatChecklistItems,
+  formatTask,
+  formatTaskList,
+  formatChecklistItem,
 } from './format.js';
 import type { CreateTaskInput, UpdateTaskInput, TaskImportance, TaskStatus } from './types.js';
 import { VALID_STATUSES, VALID_IMPORTANCES } from './types.js';
@@ -196,10 +210,14 @@ async function handleTasks(args: string[]): Promise<void> {
   if (!action || action.startsWith('--')) {
     const statusFilter = values.status as string | undefined;
     if (statusFilter && !VALID_STATUSES.includes(statusFilter as TaskStatus)) {
-      console.error(`Error: Invalid status "${statusFilter}". Valid values: ${VALID_STATUSES.join(', ')}`);
+      console.error(
+        `Error: Invalid status "${statusFilter}". Valid values: ${VALID_STATUSES.join(', ')}`,
+      );
       process.exit(1);
     }
-    const tasksList = await listTasks(client, listId, { status: statusFilter as TaskStatus | undefined });
+    const tasksList = await listTasks(client, listId, {
+      status: statusFilter as TaskStatus | undefined,
+    });
     console.log(formatTasks(tasksList, json));
     return;
   }
@@ -214,7 +232,9 @@ async function handleTasks(args: string[]): Promise<void> {
     if (values.due) input.dueDateTime = values.due as string;
     if (values.importance) {
       if (!VALID_IMPORTANCES.includes(values.importance as TaskImportance)) {
-        console.error(`Error: Invalid importance "${values.importance}". Valid values: ${VALID_IMPORTANCES.join(', ')}`);
+        console.error(
+          `Error: Invalid importance "${values.importance}". Valid values: ${VALID_IMPORTANCES.join(', ')}`,
+        );
         process.exit(1);
       }
       input.importance = values.importance as TaskImportance;
@@ -224,7 +244,9 @@ async function handleTasks(args: string[]): Promise<void> {
     if (values.start) input.startDateTime = values.start as string;
     if (values.status) {
       if (!VALID_STATUSES.includes(values.status as TaskStatus)) {
-        console.error(`Error: Invalid status "${values.status}". Valid values: ${VALID_STATUSES.join(', ')}`);
+        console.error(
+          `Error: Invalid status "${values.status}". Valid values: ${VALID_STATUSES.join(', ')}`,
+        );
         process.exit(1);
       }
       input.status = values.status as TaskStatus;
@@ -247,7 +269,9 @@ async function handleTasks(args: string[]): Promise<void> {
     if (values.due) input.dueDateTime = values.due as string;
     if (values.importance) {
       if (!VALID_IMPORTANCES.includes(values.importance as TaskImportance)) {
-        console.error(`Error: Invalid importance "${values.importance}". Valid values: ${VALID_IMPORTANCES.join(', ')}`);
+        console.error(
+          `Error: Invalid importance "${values.importance}". Valid values: ${VALID_IMPORTANCES.join(', ')}`,
+        );
         process.exit(1);
       }
       input.importance = values.importance as TaskImportance;
@@ -257,7 +281,9 @@ async function handleTasks(args: string[]): Promise<void> {
     if (values.start) input.startDateTime = values.start as string;
     if (values.status) {
       if (!VALID_STATUSES.includes(values.status as TaskStatus)) {
-        console.error(`Error: Invalid status "${values.status}". Valid values: ${VALID_STATUSES.join(', ')}`);
+        console.error(
+          `Error: Invalid status "${values.status}". Valid values: ${VALID_STATUSES.join(', ')}`,
+        );
         process.exit(1);
       }
       input.status = values.status as TaskStatus;

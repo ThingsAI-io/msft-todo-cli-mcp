@@ -5,10 +5,17 @@ function basePath(listId: string, taskId: string): string {
   return `/me/todo/lists/${listId}/tasks/${taskId}/checklistItems`;
 }
 
-export async function listChecklistItems(client: GraphClient, listId: string, taskId: string): Promise<ChecklistItem[]> {
+export async function listChecklistItems(
+  client: GraphClient,
+  listId: string,
+  taskId: string,
+): Promise<ChecklistItem[]> {
   validateId(listId, 'listId');
   validateId(taskId, 'taskId');
-  const response = await client.request<GraphResponse<ChecklistItem>>('GET', basePath(listId, taskId));
+  const response = await client.request<GraphResponse<ChecklistItem>>(
+    'GET',
+    basePath(listId, taskId),
+  );
   return response?.value ?? [];
 }
 
@@ -43,11 +50,20 @@ export async function updateChecklistItem(
   validateId(taskId, 'taskId');
   validateId(itemId, 'checklistItemId');
 
-  const response = await client.request<ChecklistItem>('PATCH',`${basePath(listId, taskId)}/${itemId}`, updates);
+  const response = await client.request<ChecklistItem>(
+    'PATCH',
+    `${basePath(listId, taskId)}/${itemId}`,
+    updates,
+  );
   return response!;
 }
 
-export async function deleteChecklistItem(client: GraphClient, listId: string, taskId: string, itemId: string): Promise<void> {
+export async function deleteChecklistItem(
+  client: GraphClient,
+  listId: string,
+  taskId: string,
+  itemId: string,
+): Promise<void> {
   validateId(listId, 'listId');
   validateId(taskId, 'taskId');
   validateId(itemId, 'checklistItemId');

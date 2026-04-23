@@ -17,12 +17,7 @@ export interface TodoTaskList {
   wellknownListName: 'none' | 'defaultList' | 'flaggedEmails';
 }
 
-export type TaskStatus =
-  | 'notStarted'
-  | 'inProgress'
-  | 'completed'
-  | 'waitingOnOthers'
-  | 'deferred';
+export type TaskStatus = 'notStarted' | 'inProgress' | 'completed' | 'waitingOnOthers' | 'deferred';
 
 export type TaskImportance = 'low' | 'normal' | 'high';
 
@@ -99,5 +94,11 @@ export function validateId(value: string, name: string): void {
   }
 }
 
-export const VALID_STATUSES: TaskStatus[] = ['notStarted', 'inProgress', 'completed', 'waitingOnOthers', 'deferred'];
+export const VALID_STATUSES: TaskStatus[] = [
+  'notStarted',
+  'inProgress',
+  'completed',
+  'waitingOnOthers',
+  'deferred',
+];
 export const VALID_IMPORTANCES: TaskImportance[] = ['low', 'normal', 'high'];

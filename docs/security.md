@@ -20,6 +20,7 @@ Because there is no client secret, there is **no secret to store, leak, or rotat
 ### Why not MSAL?
 
 Both audited implementations use `@azure/msal-node`:
+
 - jordanburke uses MSAL v3 with `ConfidentialClientApplication` (requires a client secret)
 - jhirono uses MSAL v1, which is **end-of-life**
 
@@ -50,9 +51,9 @@ This is not Fort Knox — a determined attacker with access to the same user acc
 
 ### Comparison with audited implementations
 
-| | jordanburke | jhirono | This tool |
-|---|---|---|---|
-| Token storage | Plaintext JSON (includes client secret!) | Plaintext JSON | AES-256-GCM encrypted |
+|                 | jordanburke                               | jhirono                  | This tool               |
+| --------------- | ----------------------------------------- | ------------------------ | ----------------------- |
+| Token storage   | Plaintext JSON (includes client secret!)  | Plaintext JSON           | AES-256-GCM encrypted   |
 | Secret exposure | `clientSecret` in cleartext `tokens.json` | No client secret in file | No client secret exists |
 
 ## Minimal Scopes
@@ -64,14 +65,14 @@ Only two OAuth scopes are requested:
 
 ### What we don't request (and why)
 
-| Scope | Requested by others | Why we skip it |
-|---|---|---|
-| `Tasks.Read` | Yes | Redundant — `Tasks.ReadWrite` already covers reading |
-| `Tasks.Read.Shared` | Yes | Grants access to organization-shared tasks — far too broad for a personal task manager |
-| `Tasks.ReadWrite.Shared` | Yes | Same — shared task access is not needed |
-| `User.Read` | Yes | User profile information is not needed for task management |
-| `openid` | Yes | OpenID Connect identity tokens are not needed |
-| `profile` | Yes | Profile information (name, picture) is not needed |
+| Scope                    | Requested by others | Why we skip it                                                                         |
+| ------------------------ | ------------------- | -------------------------------------------------------------------------------------- |
+| `Tasks.Read`             | Yes                 | Redundant — `Tasks.ReadWrite` already covers reading                                   |
+| `Tasks.Read.Shared`      | Yes                 | Grants access to organization-shared tasks — far too broad for a personal task manager |
+| `Tasks.ReadWrite.Shared` | Yes                 | Same — shared task access is not needed                                                |
+| `User.Read`              | Yes                 | User profile information is not needed for task management                             |
+| `openid`                 | Yes                 | OpenID Connect identity tokens are not needed                                          |
+| `profile`                | Yes                 | Profile information (name, picture) is not needed                                      |
 
 Both audited implementations request **8 scopes**. We request **2**.
 
@@ -79,23 +80,23 @@ Both audited implementations request **8 scopes**. We request **2**.
 
 Each decision below references the audit finding that motivated it:
 
-1. **No client secret** — We use a public client with PKCE. No secret exists to protect. *(jordanburke stores `clientSecret` in plaintext `tokens.json`)*
+1. **No client secret** — We use a public client with PKCE. No secret exists to protect. _(jordanburke stores `clientSecret` in plaintext `tokens.json`)_
 
-2. **No PII logging** — We never log user identifiers, task content, or token values. *(Both implementations set `piiLoggingEnabled: true` in MSAL config, piping user identifiers to stdout)*
+2. **No PII logging** — We never log user identifiers, task content, or token values. _(Both implementations set `piiLoggingEnabled: true` in MSAL config, piping user identifiers to stdout)_
 
-3. **No response body logging** — We only log HTTP status codes and error types, never response content. *(Both implementations log the first 200 characters of API responses, which can contain task content)*
+3. **No response body logging** — We only log HTTP status codes and error types, never response content. _(Both implementations log the first 200 characters of API responses, which can contain task content)_
 
-4. **No external config modification** — We never write to Claude Desktop, VS Code, or any other application's configuration files. *(jordanburke auto-modifies `claude_desktop_config.json` without user consent)*
+4. **No external config modification** — We never write to Claude Desktop, VS Code, or any other application's configuration files. _(jordanburke auto-modifies `claude_desktop_config.json` without user consent)_
 
-5. **No debug tools** — No API exploration or diagnostic tools are exposed in production. *(jordanburke ships `test-graph-api-exploration` as an MCP tool)*
+5. **No debug tools** — No API exploration or diagnostic tools are exposed in production. _(jordanburke ships `test-graph-api-exploration` as an MCP tool)_
 
 6. **No telemetry** — No analytics, phone-home, or third-party endpoints. The tool contacts only Microsoft OAuth and Graph API endpoints.
 
-7. **No token display** — The auth callback page shows only a "success" message, never token values. *(jhirono displays partial tokens in the browser callback page)*
+7. **No token display** — The auth callback page shows only a "success" message, never token values. _(jhirono displays partial tokens in the browser callback page)_
 
-8. **No hardcoded tenant** — The OAuth tenant (`consumers`, `common`, or an org tenant ID) is always read from configuration. *(jhirono hardcodes `consumers` in the token refresh path, breaking organizational accounts)*
+8. **No hardcoded tenant** — The OAuth tenant (`consumers`, `common`, or an org tenant ID) is always read from configuration. _(jhirono hardcodes `consumers` in the token refresh path, breaking organizational accounts)_
 
-9. **No redirect following** — HTTP requests use `redirect: 'error'` to prevent the Bearer token from being forwarded to unexpected domains via server-side redirects. *(A standard `fetch()` follows redirects by default, potentially leaking the Authorization header)*
+9. **No redirect following** — HTTP requests use `redirect: 'error'` to prevent the Bearer token from being forwarded to unexpected domains via server-side redirects. _(A standard `fetch()` follows redirects by default, potentially leaking the Authorization header)_
 
 ## Input Validation & Sanitization
 
@@ -121,12 +122,12 @@ All CLI `parseArgs` calls use `strict: true`, meaning unrecognized flags are rej
 
 This is an exhaustive list of every endpoint this tool contacts:
 
-| # | Endpoint | Purpose |
-|---|---|---|
-| 1 | `https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize` | OAuth authorization (opened in browser) |
-| 2 | `https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token` | Token exchange and refresh |
-| 3 | `https://graph.microsoft.com/v1.0/me/todo/lists/...` | Microsoft Graph API (task operations) |
-| 4 | `http://localhost:3847/callback` | Local-only OAuth callback (ephemeral, runs only during initial auth setup) |
+| #   | Endpoint                                                           | Purpose                                                                    |
+| --- | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| 1   | `https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize` | OAuth authorization (opened in browser)                                    |
+| 2   | `https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token`     | Token exchange and refresh                                                 |
+| 3   | `https://graph.microsoft.com/v1.0/me/todo/lists/...`               | Microsoft Graph API (task operations)                                      |
+| 4   | `http://localhost:3847/callback`                                   | Local-only OAuth callback (ephemeral, runs only during initial auth setup) |
 
 **No telemetry. No analytics. No third-party endpoints.**
 
@@ -145,14 +146,15 @@ The Graph API client automatically handles HTTP 429 (Too Many Requests) response
 
 Only **2 runtime dependencies**:
 
-| Package | Purpose |
-|---|---|
-| `@modelcontextprotocol/sdk` | MCP protocol server and stdio transport |
-| `zod` | Input schema validation for tool parameters |
+| Package                     | Purpose                                     |
+| --------------------------- | ------------------------------------------- |
+| `@modelcontextprotocol/sdk` | MCP protocol server and stdio transport     |
+| `zod`                       | Input schema validation for tool parameters |
 
 Both are well-known, widely-used packages with active maintenance.
 
 **What we don't depend on:**
+
 - **No `@azure/msal-node`** — raw `fetch()` with PKCE instead
 - **No `express`** — Node.js built-in `http.createServer()` for the ephemeral auth callback
 - **No `dotenv`** — `process.env` directly; users configure env vars in their MCP client config or shell profile

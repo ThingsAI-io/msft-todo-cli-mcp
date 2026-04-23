@@ -45,7 +45,7 @@ describe('GraphClient', () => {
     await client.request('GET', '/me/todo/lists');
     expect(mockFetch).toHaveBeenCalledWith(
       'https://graph.microsoft.com/v1.0/me/todo/lists',
-      expect.any(Object)
+      expect.any(Object),
     );
   });
 
@@ -146,7 +146,7 @@ describe('GraphClient', () => {
       .mockResolvedValueOnce(errorResponse(401, 'InvalidAuthenticationToken', 'Still expired'));
 
     await expect(client.request('GET', '/me/todo/lists')).rejects.toThrow(
-      'Graph API error 401: InvalidAuthenticationToken - Still expired'
+      'Graph API error 401: InvalidAuthenticationToken - Still expired',
     );
     expect(mockFetch).toHaveBeenCalledTimes(2);
     expect(mockForceRefresh).toHaveBeenCalledTimes(1);
@@ -156,7 +156,7 @@ describe('GraphClient', () => {
   it('throws error with status and error type for 400', async () => {
     mockFetch.mockResolvedValue(errorResponse(400, 'BadRequest', 'Invalid filter'));
     await expect(client.request('GET', '/me/todo/lists')).rejects.toThrow(
-      'Graph API error 400: BadRequest - Invalid filter'
+      'Graph API error 400: BadRequest - Invalid filter',
     );
   });
 
@@ -164,27 +164,31 @@ describe('GraphClient', () => {
   it('throws error for 403 response', async () => {
     mockFetch.mockResolvedValue(errorResponse(403, 'AccessDenied', 'Forbidden'));
     await expect(client.request('GET', '/me/todo/lists')).rejects.toThrow(
-      'Graph API error 403: AccessDenied - Forbidden'
+      'Graph API error 403: AccessDenied - Forbidden',
     );
   });
 
   it('throws error for 404 response', async () => {
     mockFetch.mockResolvedValue(errorResponse(404, 'ResourceNotFound', 'Not found'));
     await expect(client.request('GET', '/me/todo/lists/bad')).rejects.toThrow(
-      'Graph API error 404: ResourceNotFound - Not found'
+      'Graph API error 404: ResourceNotFound - Not found',
     );
   });
 
   it('throws error for 500 response', async () => {
     mockFetch.mockResolvedValue(errorResponse(500, 'InternalServerError', 'Server error'));
     await expect(client.request('GET', '/me/todo/lists')).rejects.toThrow(
-      'Graph API error 500: InternalServerError - Server error'
+      'Graph API error 500: InternalServerError - Server error',
     );
   });
 
   // 14. No response body in console output
   it('never logs response body data', async () => {
-    const sensitiveData = { id: '1', displayName: 'Secret List', value: [{ title: 'secret task' }] };
+    const sensitiveData = {
+      id: '1',
+      displayName: 'Secret List',
+      value: [{ title: 'secret task' }],
+    };
     mockFetch.mockResolvedValue(jsonResponse(sensitiveData));
     await client.request('GET', '/me/todo/lists');
 
@@ -244,7 +248,12 @@ describe('GraphClient', () => {
   it('retries on 429 with Retry-After header', async () => {
     const headers429 = new Headers({ 'Retry-After': '0' });
     mockFetch
-      .mockResolvedValueOnce({ status: 429, headers: headers429, json: () => Promise.resolve({ error: { code: 'TooManyRequests', message: 'Rate limited' } }) } as Response)
+      .mockResolvedValueOnce({
+        status: 429,
+        headers: headers429,
+        json: () =>
+          Promise.resolve({ error: { code: 'TooManyRequests', message: 'Rate limited' } }),
+      } as Response)
       .mockResolvedValueOnce(jsonResponse({ id: '1' }));
 
     const result = await client.request('GET', '/me/todo/lists');

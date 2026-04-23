@@ -7,12 +7,14 @@ Build a **CLI-first** tool for managing Microsoft To Do tasks, with an optional 
 AI agents excel at planning, breaking down tasks, and tracking follow-ups — but they need a write path into the user's actual task management system. Without one, plans live in chat and die there.
 
 **Why CLI-first:**
+
 - Any agent with terminal access can use it — no MCP config per agent/editor
 - Works outside Copilot too: scripts, cron jobs, shell aliases, other AI tools
 - Simpler to test: `todo tasks create --list "Tasks" --title "Call dentist" --due tomorrow`
 - The MCP wrapper is ~50 lines that maps tools to the same core library
 
 **Key use cases:**
+
 - **Externalize plans**: Convert conversations into tasks with due dates, reminders, and checklist sub-steps
 - **Micro-stepping**: Break tasks into small, concrete checklist items
 - **Reminder-driven workflow**: Set reminders at key transition points
@@ -42,24 +44,25 @@ The existing implementation (`jordanburke/microsoft-todo-mcp-server`) was evalua
 ## Existing Solutions Comparison
 
 Two existing Microsoft To Do MCP servers were investigated. Full security audits:
+
 - [`spec/audits/2026-04-12-microsoft-todo-mcp-server.md`](audits/2026-04-12-microsoft-todo-mcp-server.md) (jordanburke)
 - [`spec/audits/2026-04-12-todomcp.md`](audits/2026-04-12-todomcp.md) (jhirono)
 
-| Dimension | jhirono/todomcp | jordanburke/microsoft-todo-mcp-server | **Our Spec** |
-|---|---|---|---|
-| Interface | MCP only | MCP only | **CLI + MCP** |
-| Auth | ConfidentialClient + secret | ConfidentialClient + secret | **Public client + PKCE (no secret)** |
-| Token storage | Plaintext JSON | Plaintext JSON (**secret in file**) | **Encrypted (AES-256-GCM)** |
-| Scopes | 8 | 8 | **2** (`Tasks.ReadWrite` + `offline_access`) |
-| PII logging | Enabled | Enabled | **Disabled** |
-| Auto-modify external config | No | Yes (Claude Desktop) | **No** |
-| Dependencies | 82 direct | ~30 | **2 runtime** (`@modelcontextprotocol/sdk`, `zod`) |
-| MSAL | v1 (EOL) | v3 | **None — raw fetch + PKCE** |
-| Tests | None | None | **Yes (vitest)** |
-| Tools | 13 | 16 | **15** |
-| Debug tools exposed | No | Yes | **No** |
-| Last commit | Mar 2025 (13mo) | Nov 2025 (5mo) | — |
-| License | **None** | MIT | MIT |
+| Dimension                   | jhirono/todomcp             | jordanburke/microsoft-todo-mcp-server | **Our Spec**                                       |
+| --------------------------- | --------------------------- | ------------------------------------- | -------------------------------------------------- |
+| Interface                   | MCP only                    | MCP only                              | **CLI + MCP**                                      |
+| Auth                        | ConfidentialClient + secret | ConfidentialClient + secret           | **Public client + PKCE (no secret)**               |
+| Token storage               | Plaintext JSON              | Plaintext JSON (**secret in file**)   | **Encrypted (AES-256-GCM)**                        |
+| Scopes                      | 8                           | 8                                     | **2** (`Tasks.ReadWrite` + `offline_access`)       |
+| PII logging                 | Enabled                     | Enabled                               | **Disabled**                                       |
+| Auto-modify external config | No                          | Yes (Claude Desktop)                  | **No**                                             |
+| Dependencies                | 82 direct                   | ~30                                   | **2 runtime** (`@modelcontextprotocol/sdk`, `zod`) |
+| MSAL                        | v1 (EOL)                    | v3                                    | **None — raw fetch + PKCE**                        |
+| Tests                       | None                        | None                                  | **Yes (vitest)**                                   |
+| Tools                       | 13                          | 16                                    | **15**                                             |
+| Debug tools exposed         | No                          | Yes                                   | **No**                                             |
+| Last commit                 | Mar 2025 (13mo)             | Nov 2025 (5mo)                        | —                                                  |
+| License                     | **None**                    | MIT                                   | MIT                                                |
 
 ### Patterns to Adopt from Existing Implementations
 
@@ -91,6 +94,7 @@ Both interfaces share: Graph API client, auth/token management, input validation
 - No HTTP server in production (auth uses a temporary localhost callback only during initial setup)
 
 ### OAuth Flow
+
 - **OAuth 2.0 Authorization Code with PKCE** (public client — no client secret)
 - Azure AD app registration as a **public client** with `http://localhost:3847/callback` redirect URI
 - Tenant: `consumers` (personal Microsoft accounts) or `common` (both personal + org) — configurable via env var
@@ -98,6 +102,7 @@ Both interfaces share: Graph API client, auth/token management, input validation
 - **Auto-auth from MCP serve**: When `todo serve` detects no stored tokens and `TODO_MCP_CLIENT_ID` is available, it auto-triggers the OAuth browser flow inline. All auth messages go to **stderr** (not stdout) to keep the MCP JSON-RPC stdio transport clean. This means MCP users never need to run `todo setup` separately — the first tool call handles everything.
 
 ### Token Storage
+
 - Tokens stored in platform-specific secure storage:
   - **Windows**: DPAPI via `node:crypto` (`crypto.createCipheriv` with a machine-scoped key derived from `DPAPI`)
   - **Cross-platform fallback**: AES-256-GCM encryption with a key derived from machine identity (hostname + username + a salt), stored in the user's config directory
@@ -109,6 +114,7 @@ Both interfaces share: Graph API client, auth/token management, input validation
 Users need an Azure AD app registration to get a client ID. The README and docs must include both methods:
 
 **Azure Portal:**
+
 1. Go to Azure Portal → App registrations → New registration
 2. Name: anything (e.g., "Todo MCP Server")
 3. Supported account types: "Accounts in any organizational directory and personal Microsoft accounts"
@@ -117,6 +123,7 @@ Users need an Azure AD app registration to get a client ID. The README and docs 
 6. Copy the Application (client) ID
 
 **Azure CLI (one-liner):**
+
 ```bash
 az ad app create \
   --display-name "Todo MCP Server" \
@@ -124,7 +131,9 @@ az ad app create \
   --sign-in-audience "AzureADandPersonalMicrosoftAccount" \
   --query appId -o tsv
 ```
+
 Then add the permission:
+
 ```bash
 az ad app permission add \
   --id <APP_ID> \
@@ -167,6 +176,7 @@ system/src/todo-mcp-server/
 Base URL: `https://graph.microsoft.com/v1.0`
 
 ### Scopes Required
+
 - `Tasks.ReadWrite` — read and write the user's tasks and task lists
 - `offline_access` — obtain a refresh token for long-lived access
 
@@ -176,15 +186,16 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 #### Task Lists
 
-| Operation | Method | URL | Request Body | Response |
-|---|---|---|---|---|
-| List all | `GET` | `/me/todo/lists` | — | `{ value: TodoTaskList[] }` |
-| Get one | `GET` | `/me/todo/lists/{listId}` | — | `TodoTaskList` |
-| Create | `POST` | `/me/todo/lists` | `{ displayName: string }` | `TodoTaskList` |
-| Update | `PATCH` | `/me/todo/lists/{listId}` | `{ displayName: string }` | `TodoTaskList` |
-| Delete | `DELETE` | `/me/todo/lists/{listId}` | — | `204 No Content` |
+| Operation | Method   | URL                       | Request Body              | Response                    |
+| --------- | -------- | ------------------------- | ------------------------- | --------------------------- |
+| List all  | `GET`    | `/me/todo/lists`          | —                         | `{ value: TodoTaskList[] }` |
+| Get one   | `GET`    | `/me/todo/lists/{listId}` | —                         | `TodoTaskList`              |
+| Create    | `POST`   | `/me/todo/lists`          | `{ displayName: string }` | `TodoTaskList`              |
+| Update    | `PATCH`  | `/me/todo/lists/{listId}` | `{ displayName: string }` | `TodoTaskList`              |
+| Delete    | `DELETE` | `/me/todo/lists/{listId}` | —                         | `204 No Content`            |
 
 **TodoTaskList shape:**
+
 ```json
 {
   "id": "string",
@@ -197,15 +208,16 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 #### Tasks
 
-| Operation | Method | URL | Request Body | Response |
-|---|---|---|---|---|
-| List | `GET` | `/me/todo/lists/{listId}/tasks` | — | `{ value: TodoTask[] }` |
-| Get one | `GET` | `/me/todo/lists/{listId}/tasks/{taskId}` | — | `TodoTask` |
-| Create | `POST` | `/me/todo/lists/{listId}/tasks` | See below | `TodoTask` |
-| Update | `PATCH` | `/me/todo/lists/{listId}/tasks/{taskId}` | Partial `TodoTask` | `TodoTask` |
-| Delete | `DELETE` | `/me/todo/lists/{listId}/tasks/{taskId}` | — | `204 No Content` |
+| Operation | Method   | URL                                      | Request Body       | Response                |
+| --------- | -------- | ---------------------------------------- | ------------------ | ----------------------- |
+| List      | `GET`    | `/me/todo/lists/{listId}/tasks`          | —                  | `{ value: TodoTask[] }` |
+| Get one   | `GET`    | `/me/todo/lists/{listId}/tasks/{taskId}` | —                  | `TodoTask`              |
+| Create    | `POST`   | `/me/todo/lists/{listId}/tasks`          | See below          | `TodoTask`              |
+| Update    | `PATCH`  | `/me/todo/lists/{listId}/tasks/{taskId}` | Partial `TodoTask` | `TodoTask`              |
+| Delete    | `DELETE` | `/me/todo/lists/{listId}/tasks/{taskId}` | —                  | `204 No Content`        |
 
 **TodoTask shape (relevant properties):**
+
 ```json
 {
   "id": "string",
@@ -240,6 +252,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 ```
 
 **OData query support for GET tasks:**
+
 - `$filter` — e.g., `status eq 'notStarted'`
 - `$orderby` — e.g., `dueDateTime/dateTime asc`
 - `$top` / `$skip` — pagination
@@ -247,14 +260,15 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 #### Checklist Items
 
-| Operation | Method | URL | Request Body | Response |
-|---|---|---|---|---|
-| List | `GET` | `/me/todo/lists/{listId}/tasks/{taskId}/checklistItems` | — | `{ value: ChecklistItem[] }` |
-| Create | `POST` | `/me/todo/lists/{listId}/tasks/{taskId}/checklistItems` | `{ displayName, isChecked? }` | `ChecklistItem` |
-| Update | `PATCH` | `/me/todo/lists/{listId}/tasks/{taskId}/checklistItems/{itemId}` | Partial | `ChecklistItem` |
-| Delete | `DELETE` | `/me/todo/lists/{listId}/tasks/{taskId}/checklistItems/{itemId}` | — | `204 No Content` |
+| Operation | Method   | URL                                                              | Request Body                  | Response                     |
+| --------- | -------- | ---------------------------------------------------------------- | ----------------------------- | ---------------------------- |
+| List      | `GET`    | `/me/todo/lists/{listId}/tasks/{taskId}/checklistItems`          | —                             | `{ value: ChecklistItem[] }` |
+| Create    | `POST`   | `/me/todo/lists/{listId}/tasks/{taskId}/checklistItems`          | `{ displayName, isChecked? }` | `ChecklistItem`              |
+| Update    | `PATCH`  | `/me/todo/lists/{listId}/tasks/{taskId}/checklistItems/{itemId}` | Partial                       | `ChecklistItem`              |
+| Delete    | `DELETE` | `/me/todo/lists/{listId}/tasks/{taskId}/checklistItems/{itemId}` | —                             | `204 No Content`             |
 
 **ChecklistItem shape:**
+
 ```json
 {
   "id": "string",
@@ -271,6 +285,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Get all Microsoft To Do task lists. Returns list names, IDs, and metadata.
 
 **Input schema:**
+
 ```json
 {}
 ```
@@ -286,6 +301,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Get a single task list by ID. Useful for confirming a list exists or retrieving its current name after an update.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string", "description": "ID of the task list to retrieve" }
@@ -303,6 +319,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Create a new task list in Microsoft To Do.
 
 **Input schema:**
+
 ```json
 {
   "displayName": { "type": "string", "description": "Name of the new task list" }
@@ -320,6 +337,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Rename an existing task list.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string", "description": "ID of the task list" },
@@ -338,6 +356,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Delete a task list and all tasks within it. Irreversible.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string", "description": "ID of the task list to delete" }
@@ -355,13 +374,31 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Get tasks from a specific list. Supports filtering by status, sorting by due date, and pagination.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string", "description": "ID of the task list" },
-  "status": { "type": "string", "enum": ["notStarted", "inProgress", "completed", "waitingOnOthers", "deferred"], "description": "Filter by task status", "optional": true },
-  "top": { "type": "number", "description": "Maximum number of tasks to return (default: 100)", "optional": true },
-  "filter": { "type": "string", "description": "OData $filter expression for advanced querying", "optional": true },
-  "orderby": { "type": "string", "description": "OData $orderby expression for sorting results", "optional": true }
+  "status": {
+    "type": "string",
+    "enum": ["notStarted", "inProgress", "completed", "waitingOnOthers", "deferred"],
+    "description": "Filter by task status",
+    "optional": true
+  },
+  "top": {
+    "type": "number",
+    "description": "Maximum number of tasks to return (default: 100)",
+    "optional": true
+  },
+  "filter": {
+    "type": "string",
+    "description": "OData $filter expression for advanced querying",
+    "optional": true
+  },
+  "orderby": {
+    "type": "string",
+    "description": "OData $orderby expression for sorting results",
+    "optional": true
+  }
 }
 ```
 
@@ -376,6 +413,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Get a single task by ID. Essential for confirming state after mutations (create, update, complete) — agents should read back after writes.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string", "description": "ID of the task list" },
@@ -394,17 +432,42 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Create a new task in a list. Supports title, body, due date, reminder, importance, and status.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string", "description": "ID of the task list" },
-  "title": { "type": "string", "description": "Task title — should be a concrete next action, not a vague intention" },
+  "title": {
+    "type": "string",
+    "description": "Task title — should be a concrete next action, not a vague intention"
+  },
   "body": { "type": "string", "description": "Task description/notes", "optional": true },
-  "dueDateTime": { "type": "string", "description": "Due date in ISO 8601 format (e.g., 2026-04-15T17:00:00Z)", "optional": true },
-  "reminderDateTime": { "type": "string", "description": "Reminder date/time in ISO 8601 format", "optional": true },
+  "dueDateTime": {
+    "type": "string",
+    "description": "Due date in ISO 8601 format (e.g., 2026-04-15T17:00:00Z)",
+    "optional": true
+  },
+  "reminderDateTime": {
+    "type": "string",
+    "description": "Reminder date/time in ISO 8601 format",
+    "optional": true
+  },
   "importance": { "type": "string", "enum": ["low", "normal", "high"], "optional": true },
-  "startDateTime": { "type": "string", "description": "Start date in ISO 8601 format", "optional": true },
-  "status": { "type": "string", "enum": ["notStarted", "inProgress", "completed", "waitingOnOthers", "deferred"], "optional": true },
-  "categories": { "type": "array", "items": { "type": "string" }, "description": "Category tags", "optional": true }
+  "startDateTime": {
+    "type": "string",
+    "description": "Start date in ISO 8601 format",
+    "optional": true
+  },
+  "status": {
+    "type": "string",
+    "enum": ["notStarted", "inProgress", "completed", "waitingOnOthers", "deferred"],
+    "optional": true
+  },
+  "categories": {
+    "type": "array",
+    "items": { "type": "string" },
+    "description": "Category tags",
+    "optional": true
+  }
 }
 ```
 
@@ -419,6 +482,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Update any properties of an existing task — title, status, due date, reminder, importance, body, categories.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string" },
@@ -429,7 +493,11 @@ Base URL: `https://graph.microsoft.com/v1.0`
   "reminderDateTime": { "type": "string", "optional": true },
   "importance": { "type": "string", "enum": ["low", "normal", "high"], "optional": true },
   "startDateTime": { "type": "string", "optional": true },
-  "status": { "type": "string", "enum": ["notStarted", "inProgress", "completed", "waitingOnOthers", "deferred"], "optional": true },
+  "status": {
+    "type": "string",
+    "enum": ["notStarted", "inProgress", "completed", "waitingOnOthers", "deferred"],
+    "optional": true
+  },
   "categories": { "type": "array", "items": { "type": "string" }, "optional": true }
 }
 ```
@@ -445,6 +513,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Delete a task and all its checklist items. Irreversible.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string" },
@@ -463,6 +532,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Mark a task as completed. Convenience wrapper that sets `status: "completed"`. Designed for quick CoS-driven task closure during accountability check-ins.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string" },
@@ -481,6 +551,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Get the checklist items (sub-steps) for a task.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string" },
@@ -499,11 +570,15 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Add a checklist sub-step to a task.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string" },
   "taskId": { "type": "string" },
-  "displayName": { "type": "string", "description": "Text of the checklist item — should be a concrete micro-step" },
+  "displayName": {
+    "type": "string",
+    "description": "Text of the checklist item — should be a concrete micro-step"
+  },
   "isChecked": { "type": "boolean", "optional": true }
 }
 ```
@@ -519,6 +594,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Update a checklist item's text or checked status.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string" },
@@ -540,6 +616,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 **Description:** Delete a checklist item from a task.
 
 **Input schema:**
+
 ```json
 {
   "listId": { "type": "string" },
@@ -555,6 +632,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 ---
 
 **Tools NOT included (by design):**
+
 - No `auth-status` tool — authentication is invisible; errors surface in tool responses
 - No `get-task-lists-organized` — hardcoded emoji-pattern grouping is user-specific; the CoS agent can do this in its own logic
 - No `archive-completed-tasks` — bulk operations should be composed by the agent from primitive CRUD tools
@@ -600,6 +678,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
    ```
 5. **User authenticates** in browser → Microsoft redirects to `http://localhost:3847/callback?code=...`
 6. **Exchange code for tokens**:
+
    ```
    POST https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token
    Content-Type: application/x-www-form-urlencoded
@@ -610,7 +689,9 @@ Base URL: `https://graph.microsoft.com/v1.0`
    &redirect_uri=http://localhost:3847/callback
    &code_verifier={code_verifier}
    ```
+
    Response contains `access_token`, `refresh_token`, `expires_in`.
+
 7. **Encrypt and store tokens** to disk (see Token Storage below)
 8. **Shut down localhost server** — it only runs for the auth flow
 9. **Print success message** with instructions for configuring MCP client
@@ -619,6 +700,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 
 - Before every Graph API call, check if `expiresAt < Date.now() + 5_minutes`
 - If expired or near-expiry, refresh:
+
   ```
   POST https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token
   Content-Type: application/x-www-form-urlencoded
@@ -628,6 +710,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
   &refresh_token={stored_refresh_token}
   &scope=Tasks.ReadWrite offline_access
   ```
+
 - On success: update stored tokens (both access and refresh — refresh tokens rotate)
 - On failure (e.g., refresh token revoked): return a clear error message instructing the user to re-run setup
 - **No client secret** in the refresh request (public client flow)
@@ -635,6 +718,7 @@ Base URL: `https://graph.microsoft.com/v1.0`
 ### Secure Token Persistence
 
 Store an encrypted JSON blob containing:
+
 ```json
 {
   "accessToken": "...",
@@ -646,6 +730,7 @@ Store an encrypted JSON blob containing:
 ```
 
 Encryption approach:
+
 - **AES-256-GCM** using Node.js `crypto` module
 - Key derived from: `PBKDF2(machineId + username, storedSalt, 100000, 32, 'sha512')`
   - `machineId`: `os.hostname()` (not secret, but adds machine-binding)
@@ -681,16 +766,17 @@ Encryption approach:
 ## Project Setup
 
 ### Directory
+
 ```
 system/src/todo-mcp-server/
 ```
 
 ### Dependencies (minimal list with justification)
 
-| Package | Purpose | Justification |
-|---|---|---|
-| `@modelcontextprotocol/sdk` | MCP protocol server + stdio transport | Required — this is what we're building |
-| `zod` | Input schema validation for MCP tools | Required by MCP SDK for tool parameter schemas |
+| Package                     | Purpose                               | Justification                                  |
+| --------------------------- | ------------------------------------- | ---------------------------------------------- |
+| `@modelcontextprotocol/sdk` | MCP protocol server + stdio transport | Required — this is what we're building         |
+| `zod`                       | Input schema validation for MCP tools | Required by MCP SDK for tool parameter schemas |
 
 **That's it.** Two runtime dependencies.
 
@@ -700,12 +786,12 @@ system/src/todo-mcp-server/
 
 ### Dev Dependencies
 
-| Package | Purpose |
-|---|---|
-| `typescript` | Type checking and compilation |
-| `vitest` | Testing |
-| `tsx` | Dev execution without build step |
-| `@types/node` | Node.js type definitions |
+| Package       | Purpose                          |
+| ------------- | -------------------------------- |
+| `typescript`  | Type checking and compilation    |
+| `vitest`      | Testing                          |
+| `tsx`         | Dev execution without build step |
+| `@types/node` | Node.js type definitions         |
 
 ### package.json essentials
 
@@ -719,12 +805,7 @@ system/src/todo-mcp-server/
   "bin": {
     "todo": "dist/cli.js"
   },
-  "files": [
-    "dist/**/*.js",
-    "dist/**/*.d.ts",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist/**/*.js", "dist/**/*.d.ts", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc",
     "start": "node dist/cli.js",
@@ -887,15 +968,15 @@ dist/
 
 ### Unit Tests (vitest)
 
-| Area | What to test |
-|---|---|
-| `token-store.ts` | Encrypt/decrypt round-trip; corrupted file handling; missing file returns null |
-| `token-manager.ts` | Env var override; file-based token load; token refresh flow (mock fetch); mutex prevents concurrent refresh; expired token triggers refresh |
-| `graph/client.ts` | Request construction (URL, headers, body); 401 retry logic; 429 rate-limit retry; redirect policy; structured error class; error response handling; no response body in logs |
-| `core/*.ts` | Input validation (ID format, enum values); request body construction for Graph API; response formatting |
-| `cli.ts` | Arg parsing; command routing; output formatting; strict mode rejects unknown flags; enum validation |
-| `auth/setup.ts` | PKCE verifier/challenge generation; code challenge is valid base64url SHA-256; state parameter generation and verification |
-| `format.ts` | Terminal output sanitization strips ANSI escapes and control characters |
+| Area               | What to test                                                                                                                                                                 |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `token-store.ts`   | Encrypt/decrypt round-trip; corrupted file handling; missing file returns null                                                                                               |
+| `token-manager.ts` | Env var override; file-based token load; token refresh flow (mock fetch); mutex prevents concurrent refresh; expired token triggers refresh                                  |
+| `graph/client.ts`  | Request construction (URL, headers, body); 401 retry logic; 429 rate-limit retry; redirect policy; structured error class; error response handling; no response body in logs |
+| `core/*.ts`        | Input validation (ID format, enum values); request body construction for Graph API; response formatting                                                                      |
+| `cli.ts`           | Arg parsing; command routing; output formatting; strict mode rejects unknown flags; enum validation                                                                          |
+| `auth/setup.ts`    | PKCE verifier/challenge generation; code challenge is valid base64url SHA-256; state parameter generation and verification                                                   |
+| `format.ts`        | Terminal output sanitization strips ANSI escapes and control characters                                                                                                      |
 
 ### Integration Tests (manual, with real Azure AD app)
 
@@ -905,6 +986,7 @@ dist/
 - Error handling: invalid list ID, expired/revoked tokens, network errors
 
 ### What NOT to test
+
 - Microsoft Graph API behavior itself (they own that)
 - MCP SDK internals (`McpServer`, `StdioServerTransport`)
 - HTTPS/TLS behavior
@@ -917,12 +999,15 @@ dist/
 - [ ] `npm start` runs CLI; `todo serve` launches MCP server on stdio
 - [ ] CLI commands work for all 15 operations:
 - [ ] MCP tools are registered and functional (thin wrapper over CLI core):
+
   ```
   todo lists / todo tasks / todo checklist — all CRUD operations + single-item get
   ```
+
   - `list-task-lists`, `get-task-list`, `create-task-list`, `update-task-list`, `delete-task-list`
   - `list-tasks`, `get-task`, `create-task`, `update-task`, `delete-task`, `complete-task`
   - `list-checklist-items`, `create-checklist-item`, `update-checklist-item`, `delete-checklist-item`
+
 - [ ] Token storage is encrypted (not plaintext JSON)
 - [ ] No PII or task content in logs (grep stderr output during operation)
 - [ ] No client secret anywhere in the codebase

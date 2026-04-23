@@ -1,5 +1,14 @@
 import { GraphClient } from '../graph/client.js';
-import { TodoTask, CreateTaskInput, UpdateTaskInput, ListTasksOptions, GraphResponse, GraphDateTime, validateId, VALID_STATUSES } from '../types.js';
+import {
+  TodoTask,
+  CreateTaskInput,
+  UpdateTaskInput,
+  ListTasksOptions,
+  GraphResponse,
+  GraphDateTime,
+  validateId,
+  VALID_STATUSES,
+} from '../types.js';
 
 export function toGraphDateTime(isoString: string): GraphDateTime {
   const date = new Date(isoString);
@@ -8,7 +17,11 @@ export function toGraphDateTime(isoString: string): GraphDateTime {
   return { dateTime, timeZone: 'UTC' };
 }
 
-export async function listTasks(client: GraphClient, listId: string, options?: ListTasksOptions): Promise<TodoTask[]> {
+export async function listTasks(
+  client: GraphClient,
+  listId: string,
+  options?: ListTasksOptions,
+): Promise<TodoTask[]> {
   validateId(listId, 'listId');
 
   const queryParams: Record<string, string> = {};
@@ -36,15 +49,26 @@ export async function listTasks(client: GraphClient, listId: string, options?: L
   return response?.value ?? [];
 }
 
-export async function getTask(client: GraphClient, listId: string, taskId: string): Promise<TodoTask> {
+export async function getTask(
+  client: GraphClient,
+  listId: string,
+  taskId: string,
+): Promise<TodoTask> {
   validateId(listId, 'listId');
   validateId(taskId, 'taskId');
-  const response = await client.request<TodoTask>('GET', `/me/todo/lists/${listId}/tasks/${taskId}`);
+  const response = await client.request<TodoTask>(
+    'GET',
+    `/me/todo/lists/${listId}/tasks/${taskId}`,
+  );
   if (!response) throw new Error('Unexpected empty response');
   return response;
 }
 
-export async function createTask(client: GraphClient, listId: string, input: CreateTaskInput): Promise<TodoTask> {
+export async function createTask(
+  client: GraphClient,
+  listId: string,
+  input: CreateTaskInput,
+): Promise<TodoTask> {
   validateId(listId, 'listId');
   if (!input.title) throw new Error('title is required');
 
@@ -77,7 +101,12 @@ export async function createTask(client: GraphClient, listId: string, input: Cre
   return response!;
 }
 
-export async function updateTask(client: GraphClient, listId: string, taskId: string, input: UpdateTaskInput): Promise<TodoTask> {
+export async function updateTask(
+  client: GraphClient,
+  listId: string,
+  taskId: string,
+  input: UpdateTaskInput,
+): Promise<TodoTask> {
   validateId(listId, 'listId');
   validateId(taskId, 'taskId');
 
@@ -105,19 +134,35 @@ export async function updateTask(client: GraphClient, listId: string, taskId: st
     body.startDateTime = input.startDateTime === '' ? null : toGraphDateTime(input.startDateTime);
   }
 
-  const response = await client.request<TodoTask>('PATCH', `/me/todo/lists/${listId}/tasks/${taskId}`, body);
+  const response = await client.request<TodoTask>(
+    'PATCH',
+    `/me/todo/lists/${listId}/tasks/${taskId}`,
+    body,
+  );
   return response!;
 }
 
-export async function deleteTask(client: GraphClient, listId: string, taskId: string): Promise<void> {
+export async function deleteTask(
+  client: GraphClient,
+  listId: string,
+  taskId: string,
+): Promise<void> {
   validateId(listId, 'listId');
   validateId(taskId, 'taskId');
   await client.request('DELETE', `/me/todo/lists/${listId}/tasks/${taskId}`);
 }
 
-export async function completeTask(client: GraphClient, listId: string, taskId: string): Promise<TodoTask> {
+export async function completeTask(
+  client: GraphClient,
+  listId: string,
+  taskId: string,
+): Promise<TodoTask> {
   validateId(listId, 'listId');
   validateId(taskId, 'taskId');
-  const response = await client.request<TodoTask>('PATCH', `/me/todo/lists/${listId}/tasks/${taskId}`, { status: 'completed' });
+  const response = await client.request<TodoTask>(
+    'PATCH',
+    `/me/todo/lists/${listId}/tasks/${taskId}`,
+    { status: 'completed' },
+  );
   return response!;
 }

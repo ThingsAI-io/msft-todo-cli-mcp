@@ -56,7 +56,7 @@ describe('MCP Server', () => {
   it('registers all 15 tools', async () => {
     const { client } = await setup();
     const { tools } = await client.listTools();
-    const names = tools.map(t => t.name).sort();
+    const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
       'complete-task',
       'create-checklist-item',
@@ -78,7 +78,15 @@ describe('MCP Server', () => {
 
   it('list-task-lists calls listTaskLists and returns formatted text', async () => {
     const { client } = await setup();
-    const mockData = [{ id: '1', displayName: 'My List', isOwner: true, isShared: false, wellknownListName: 'none' }];
+    const mockData = [
+      {
+        id: '1',
+        displayName: 'My List',
+        isOwner: true,
+        isShared: false,
+        wellknownListName: 'none',
+      },
+    ];
     taskLists.listTaskLists.mockResolvedValue(mockData as any);
 
     const result = await client.callTool({ name: 'list-task-lists', arguments: {} });
@@ -125,7 +133,9 @@ describe('MCP Server', () => {
     });
     expect(result.isError).toBeFalsy();
     expect(tasks.updateTask).toHaveBeenCalledWith(
-      expect.anything(), 'list-1', 'task-1',
+      expect.anything(),
+      'list-1',
+      'task-1',
       expect.objectContaining({ title: 'Updated' }),
     );
   });
@@ -140,28 +150,57 @@ describe('MCP Server', () => {
 
     // list-tasks
     tasks.listTasks.mockResolvedValue([]);
-    await client.callTool({ name: 'list-tasks', arguments: { listId: 'list-1', status: 'completed', top: 5 } });
+    await client.callTool({
+      name: 'list-tasks',
+      arguments: { listId: 'list-1', status: 'completed', top: 5 },
+    });
     expect(tasks.listTasks).toHaveBeenCalledWith(
-      expect.anything(), 'list-1',
+      expect.anything(),
+      'list-1',
       expect.objectContaining({ status: 'completed', top: 5 }),
     );
 
     // create-checklist-item
-    checklist.createChecklistItem.mockResolvedValue({ id: 'ci-1', displayName: 'Step 1', isChecked: false, createdDateTime: '' } as any);
+    checklist.createChecklistItem.mockResolvedValue({
+      id: 'ci-1',
+      displayName: 'Step 1',
+      isChecked: false,
+      createdDateTime: '',
+    } as any);
     await client.callTool({
       name: 'create-checklist-item',
       arguments: { listId: 'l1', taskId: 't1', displayName: 'Step 1', isChecked: true },
     });
-    expect(checklist.createChecklistItem).toHaveBeenCalledWith(expect.anything(), 'l1', 't1', 'Step 1', true);
+    expect(checklist.createChecklistItem).toHaveBeenCalledWith(
+      expect.anything(),
+      'l1',
+      't1',
+      'Step 1',
+      true,
+    );
 
     // update-checklist-item
-    checklist.updateChecklistItem.mockResolvedValue({ id: 'ci-1', displayName: 'Updated', isChecked: true, createdDateTime: '' } as any);
+    checklist.updateChecklistItem.mockResolvedValue({
+      id: 'ci-1',
+      displayName: 'Updated',
+      isChecked: true,
+      createdDateTime: '',
+    } as any);
     await client.callTool({
       name: 'update-checklist-item',
-      arguments: { listId: 'l1', taskId: 't1', checklistItemId: 'ci-1', displayName: 'Updated', isChecked: true },
+      arguments: {
+        listId: 'l1',
+        taskId: 't1',
+        checklistItemId: 'ci-1',
+        displayName: 'Updated',
+        isChecked: true,
+      },
     });
     expect(checklist.updateChecklistItem).toHaveBeenCalledWith(
-      expect.anything(), 'l1', 't1', 'ci-1',
+      expect.anything(),
+      'l1',
+      't1',
+      'ci-1',
       expect.objectContaining({ displayName: 'Updated', isChecked: true }),
     );
   });
@@ -175,10 +214,16 @@ describe('MCP Server', () => {
     const r1 = await client.callTool({ name: 'delete-task-list', arguments: { listId: 'l1' } });
     expect((r1.content as any)[0].text).toContain('deleted');
 
-    const r2 = await client.callTool({ name: 'delete-task', arguments: { listId: 'l1', taskId: 't1' } });
+    const r2 = await client.callTool({
+      name: 'delete-task',
+      arguments: { listId: 'l1', taskId: 't1' },
+    });
     expect((r2.content as any)[0].text).toContain('deleted');
 
-    const r3 = await client.callTool({ name: 'delete-checklist-item', arguments: { listId: 'l1', taskId: 't1', checklistItemId: 'ci1' } });
+    const r3 = await client.callTool({
+      name: 'delete-checklist-item',
+      arguments: { listId: 'l1', taskId: 't1', checklistItemId: 'ci1' },
+    });
     expect((r3.content as any)[0].text).toContain('deleted');
   });
 

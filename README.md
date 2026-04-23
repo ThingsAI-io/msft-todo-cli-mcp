@@ -2,6 +2,8 @@
 
 A **CLI-first** tool for managing Microsoft To Do tasks, with an optional MCP server for AI agents.
 
+> **⚠️ Experimental** — This software is experimental and provided "as is" without warranty of any kind. Use at your own risk. See [LICENSE](LICENSE) for details.
+
 ## Install
 
 ```bash
@@ -58,4 +60,3 @@ Add to VS Code `settings.json` for Copilot integration:
 ## License
 
 MIT
-

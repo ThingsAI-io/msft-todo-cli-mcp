@@ -1,8 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GraphClient } from '../src/graph/client.js';
-import { listTaskLists, getTaskList, createTaskList, updateTaskList, deleteTaskList } from '../src/core/task-lists.js';
-import { listTasks, getTask, createTask, updateTask, deleteTask, completeTask, toGraphDateTime } from '../src/core/tasks.js';
-import { listChecklistItems, createChecklistItem, updateChecklistItem, deleteChecklistItem } from '../src/core/checklist-items.js';
+import {
+  listTaskLists,
+  getTaskList,
+  createTaskList,
+  updateTaskList,
+  deleteTaskList,
+} from '../src/core/task-lists.js';
+import {
+  listTasks,
+  getTask,
+  createTask,
+  updateTask,
+  deleteTask,
+  completeTask,
+  toGraphDateTime,
+} from '../src/core/tasks.js';
+import {
+  listChecklistItems,
+  createChecklistItem,
+  updateChecklistItem,
+  deleteChecklistItem,
+} from '../src/core/checklist-items.js';
 
 const mockRequest = vi.fn();
 const client = { request: mockRequest } as unknown as GraphClient;
@@ -40,7 +59,9 @@ describe('Task Lists', () => {
 
     const result = await updateTaskList(client, 'list-123', 'New');
 
-    expect(mockRequest).toHaveBeenCalledWith('PATCH', '/me/todo/lists/list-123', { displayName: 'New' });
+    expect(mockRequest).toHaveBeenCalledWith('PATCH', '/me/todo/lists/list-123', {
+      displayName: 'New',
+    });
     expect(result).toEqual(updated);
   });
 
@@ -69,7 +90,9 @@ describe('Tasks', () => {
 
     const result = await listTasks(client, 'list-1');
 
-    expect(mockRequest).toHaveBeenCalledWith('GET', '/me/todo/lists/list-1/tasks', undefined, { '$top': '100' });
+    expect(mockRequest).toHaveBeenCalledWith('GET', '/me/todo/lists/list-1/tasks', undefined, {
+      $top: '100',
+    });
     expect(result).toEqual([]);
   });
 
@@ -82,7 +105,7 @@ describe('Tasks', () => {
       'GET',
       '/me/todo/lists/list-1/tasks',
       undefined,
-      expect.objectContaining({ '$filter': "status eq 'completed'" }),
+      expect.objectContaining({ $filter: "status eq 'completed'" }),
     );
   });
 
@@ -95,14 +118,19 @@ describe('Tasks', () => {
       'GET',
       '/me/todo/lists/list-1/tasks',
       undefined,
-      expect.objectContaining({ '$top': '5' }),
+      expect.objectContaining({ $top: '5' }),
     );
   });
 
   it('listTasks with combined options builds correct query params', async () => {
     mockRequest.mockResolvedValue({ value: [] });
 
-    await listTasks(client, 'list-1', { status: 'completed', top: 10, orderby: 'createdDateTime desc', select: 'id,title' });
+    await listTasks(client, 'list-1', {
+      status: 'completed',
+      top: 10,
+      orderby: 'createdDateTime desc',
+      select: 'id,title',
+    });
 
     const params = mockRequest.mock.calls[0][3];
     expect(params['$filter']).toBe("status eq 'completed'");
@@ -161,7 +189,10 @@ describe('Tasks', () => {
   it('createTask sets isReminderOn when reminderDateTime provided', async () => {
     mockRequest.mockResolvedValue({ id: 't1' });
 
-    await createTask(client, 'list-1', { title: 'Reminder', reminderDateTime: '2024-12-24T09:00:00Z' });
+    await createTask(client, 'list-1', {
+      title: 'Reminder',
+      reminderDateTime: '2024-12-24T09:00:00Z',
+    });
 
     const body = mockRequest.mock.calls[0][2];
     expect(body.isReminderOn).toBe(true);
@@ -199,11 +230,15 @@ describe('Tasks', () => {
 
     await completeTask(client, 'list-1', 'task-1');
 
-    expect(mockRequest).toHaveBeenCalledWith('PATCH', '/me/todo/lists/list-1/tasks/task-1', { status: 'completed' });
+    expect(mockRequest).toHaveBeenCalledWith('PATCH', '/me/todo/lists/list-1/tasks/task-1', {
+      status: 'completed',
+    });
   });
 
   it('updateTask throws if taskId is empty', async () => {
-    await expect(updateTask(client, 'list-1', '', { title: 'X' })).rejects.toThrow('taskId is required');
+    await expect(updateTask(client, 'list-1', '', { title: 'X' })).rejects.toThrow(
+      'taskId is required',
+    );
   });
 
   it('getTask calls GET with correct URL', async () => {
@@ -217,7 +252,9 @@ describe('Tasks', () => {
   });
 
   it('listTasks with invalid status throws error', async () => {
-    await expect(listTasks(client, 'list-1', { status: 'bogus' })).rejects.toThrow('Invalid status');
+    await expect(listTasks(client, 'list-1', { status: 'bogus' })).rejects.toThrow(
+      'Invalid status',
+    );
   });
 });
 
@@ -255,7 +292,10 @@ describe('Checklist Items', () => {
 
     const result = await listChecklistItems(client, 'list-1', 'task-1');
 
-    expect(mockRequest).toHaveBeenCalledWith('GET', '/me/todo/lists/list-1/tasks/task-1/checklistItems');
+    expect(mockRequest).toHaveBeenCalledWith(
+      'GET',
+      '/me/todo/lists/list-1/tasks/task-1/checklistItems',
+    );
     expect(result).toEqual([]);
   });
 
@@ -317,6 +357,8 @@ describe('Checklist Items', () => {
   });
 
   it('throws if checklistItemId is empty', async () => {
-    await expect(deleteChecklistItem(client, 'list-1', 'task-1', '')).rejects.toThrow('checklistItemId is required');
+    await expect(deleteChecklistItem(client, 'list-1', 'task-1', '')).rejects.toThrow(
+      'checklistItemId is required',
+    );
   });
 });

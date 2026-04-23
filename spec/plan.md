@@ -2,9 +2,10 @@
 
 ## Overview
 
-Build a CLI-first Microsoft To Do management tool with an optional MCP server wrapper. The implementation follows the spec in `spec/intent.md` exactly. The project lives in the repo root (not `system/src/todo-mcp-server/` as the spec's tree diagram suggests — adjusted since this repo *is* the project).
+Build a CLI-first Microsoft To Do management tool with an optional MCP server wrapper. The implementation follows the spec in `spec/intent.md` exactly. The project lives in the repo root (not `system/src/todo-mcp-server/` as the spec's tree diagram suggests — adjusted since this repo _is_ the project).
 
 **Reference documents:**
+
 - Intent/Spec: [`spec/intent.md`](intent.md)
 - Security audit (jordanburke): [`spec/audits/2026-04-12-microsoft-todo-mcp-server.md`](audits/2026-04-12-microsoft-todo-mcp-server.md)
 - Security audit (jhirono): [`spec/audits/2026-04-12-todomcp.md`](audits/2026-04-12-todomcp.md)
@@ -18,6 +19,7 @@ The work is broken into **8 parallelizable work units** designed for `/fleet` ex
 ## Work Units
 
 ### WU-1: Project Scaffolding + Types
+
 **Files:** `package.json`, `tsconfig.json`, `.gitignore` (update), `src/types.ts`
 **Dependencies:** None (do this first or in parallel with nothing)
 
@@ -35,6 +37,7 @@ The work is broken into **8 parallelizable work units** designed for `/fleet` ex
 - Run `tsc --noEmit` to verify types compile
 
 ### WU-2: Auth — Token Store (Encrypted Persistence)
+
 **Files:** `src/auth/token-store.ts`, `tests/token-store.test.ts`
 **Dependencies:** WU-1 (needs types + package.json)
 
@@ -55,6 +58,7 @@ The work is broken into **8 parallelizable work units** designed for `/fleet` ex
   - Salt, IV, and tag are present and correct lengths in stored format
 
 ### WU-3: Auth — Token Manager + Refresh
+
 **Files:** `src/auth/token-manager.ts`, `tests/token-manager.test.ts`
 **Dependencies:** WU-1 (types), WU-2 (token-store)
 
@@ -82,6 +86,7 @@ The work is broken into **8 parallelizable work units** designed for `/fleet` ex
   - Refresh uses configurable tenant (NOT hardcoded `consumers` — jhirono audit bug)
 
 ### WU-4: Auth — Setup (OAuth PKCE Flow)
+
 **Files:** `src/auth/setup.ts`, `tests/setup.test.ts`
 **Dependencies:** WU-1 (types), WU-2 (token-store)
 
@@ -107,6 +112,7 @@ The work is broken into **8 parallelizable work units** designed for `/fleet` ex
   - Token exchange request body contains code_verifier and no client_secret
 
 ### WU-5: Graph API Client
+
 **Files:** `src/graph/client.ts`, `tests/graph-client.test.ts`
 **Dependencies:** WU-1 (types), WU-3 (token-manager)
 
@@ -133,10 +139,12 @@ The work is broken into **8 parallelizable work units** designed for `/fleet` ex
   - Query parameters (OData) are appended correctly to URL
 
 ### WU-6: Core Operations (Task Lists + Tasks + Checklist Items)
+
 **Files:** `src/core/task-lists.ts`, `src/core/tasks.ts`, `src/core/checklist-items.ts`, `tests/core.test.ts`
 **Dependencies:** WU-1 (types), WU-5 (graph client)
 
 **Task Lists** (`src/core/task-lists.ts`):
+
 - `listTaskLists(client)` → GET /me/todo/lists
 - `createTaskList(client, displayName)` → POST /me/todo/lists
 - `updateTaskList(client, listId, displayName)` → PATCH /me/todo/lists/{listId}
@@ -144,6 +152,7 @@ The work is broken into **8 parallelizable work units** designed for `/fleet` ex
 - Validate all IDs as non-empty strings
 
 **Tasks** (`src/core/tasks.ts`):
+
 - `listTasks(client, listId, options?)` → GET with $filter, $orderby, $top query params
 - `createTask(client, listId, taskInput)` → POST with date/time formatting
 - `updateTask(client, listId, taskId, updates)` → PATCH; empty string → null for clearing date fields
@@ -153,6 +162,7 @@ The work is broken into **8 parallelizable work units** designed for `/fleet` ex
 - OData query parameter construction ($filter, $orderby, $top, $select)
 
 **Checklist Items** (`src/core/checklist-items.ts`):
+
 - `listChecklistItems(client, listId, taskId)` → GET
 - `createChecklistItem(client, listId, taskId, displayName, isChecked?)` → POST
 - `updateChecklistItem(client, listId, taskId, itemId, updates)` → PATCH
@@ -190,6 +200,7 @@ The work is broken into **8 parallelizable work units** designed for `/fleet` ex
   - Empty checklistItemId throws validation error
 
 ### WU-7: CLI Entry Point + Output Formatting
+
 **Files:** `src/cli.ts`, `src/format.ts`, `tests/cli.test.ts`
 **Dependencies:** WU-1 (types), WU-3 (token-manager), WU-5 (graph client), WU-6 (core ops)
 
@@ -244,6 +255,7 @@ The work is broken into **8 parallelizable work units** designed for `/fleet` ex
   - Output formatting: importance shown for non-normal values
 
 ### WU-8: MCP Server Module
+
 **Files:** `src/mcp.ts`
 **Dependencies:** WU-1 (types), WU-3 (token-manager), WU-5 (graph client), WU-6 (core ops)
 
@@ -296,6 +308,7 @@ WU-1 (Scaffolding + Types)
 ```
 
 **Parallelization strategy for `/fleet`:**
+
 - **Wave 1:** WU-1 (must go first — creates package.json, installs deps, creates types)
 - **Wave 2:** WU-2, WU-4 (partial — PKCE generation + setup logic without token-store integration), WU-5 (partial — can write the client, depends on WU-3 interface)
 - **Wave 3:** WU-3, WU-6
@@ -310,6 +323,7 @@ However, for `/fleet` where agents get full context: **all 8 WUs can be dispatch
 Every agent must follow these — derived from `spec/intent.md` anti-patterns and the security audits in `spec/audits/`:
 
 **From jordanburke audit (`spec/audits/2026-04-12-microsoft-todo-mcp-server.md`):**
+
 - [ ] No client secret anywhere — public client with PKCE (jordanburke stores clientSecret in tokens.json)
 - [ ] No `piiLoggingEnabled: true` — both audited solutions enable it
 - [ ] Never auto-modify external app configs (jordanburke writes to Claude Desktop config)
@@ -318,6 +332,7 @@ Every agent must follow these — derived from `spec/intent.md` anti-patterns an
 - [ ] Only 2 scopes — both audited solutions request 8 including `.Shared` scopes
 
 **From jhirono audit (`spec/audits/2026-04-12-todomcp.md`):**
+
 - [ ] Token refresh must use configurable tenant, not hardcoded `consumers` (jhirono bug)
 - [ ] No `/silentLogin` or client credentials flow — unnecessary attack surface
 - [ ] No dead dependencies — jhirono has `express-rate-limit` and `pkce-challenge` imported but never used
@@ -325,12 +340,14 @@ Every agent must follow these — derived from `spec/intent.md` anti-patterns an
 - [ ] No MSAL — use raw fetch + PKCE (avoids both jhirono's v1 EOL issue and jordanburke's 500KB dependency)
 
 **Patterns to adopt (from audits):**
+
 - [ ] Personal account detection: warn about `MailboxNotEnabledForRESTAPI` proactively (jhirono pattern)
 - [ ] OData query parameters: `$filter`, `$select`, `$orderby`, `$top`, `$skip` on task listing (jhirono pattern)
 - [ ] Tool descriptions: explain To Do hierarchy (list → task → checklist) in each tool description (jhirono pattern)
 - [ ] Empty-string-to-null: clearing date fields via empty string in update-task (jhirono pattern)
 
 **Core security requirements:**
+
 - [ ] AES-256-GCM for token storage, never plaintext JSON
 - [ ] Zero PII logging — never log user identifiers, task content, or token values
 - [ ] No telemetry, no phone-home
@@ -345,6 +362,7 @@ Every agent must follow these — derived from `spec/intent.md` anti-patterns an
 ## Post-Implementation
 
 After all WUs complete:
+
 1. Run `npm run build` — verify zero errors
 2. Run `npm test` — verify all tests pass
 3. Update `README.md` with setup instructions, CLI usage, MCP config snippet
@@ -380,6 +398,7 @@ npm run build
 ### Manual Local Testing (requires Azure AD app registration)
 
 #### Prerequisites
+
 1. Create an Azure AD app registration (see README or spec/intent.md § Authentication Flow)
 2. Set environment variables:
    ```bash
@@ -388,15 +407,18 @@ npm run build
    ```
 
 #### Step 1: Run OAuth Setup
+
 ```bash
 # Interactive setup — opens browser for Microsoft login
 npm run setup
 # Or after building:
 node dist/cli.js setup
 ```
+
 This opens your browser, you log in, and tokens are encrypted and stored locally.
 
 #### Step 2: Test CLI Commands
+
 ```bash
 # List all task lists
 npx tsx src/cli.ts lists
@@ -424,6 +446,7 @@ npx tsx src/cli.ts lists delete <listId>
 ```
 
 #### Step 3: Test MCP Server
+
 ```bash
 # Start the MCP server on stdio (for piping JSON-RPC messages)
 npx tsx src/cli.ts serve
@@ -433,7 +456,9 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":
 ```
 
 #### Step 4: Test in VS Code (MCP client)
+
 Add to your VS Code `settings.json`:
+
 ```json
 {
   "mcp": {
@@ -449,9 +474,11 @@ Add to your VS Code `settings.json`:
   }
 }
 ```
+
 Then use Copilot Chat to invoke tools like "list my todo lists" or "create a task called 'Buy groceries' in my Tasks list".
 
 #### Step 5: Test Token Refresh
+
 ```bash
 # Force token expiry by waiting (tokens expire in ~1 hour) or by
 # manually editing the encrypted store's expiresAt to a past timestamp.
@@ -460,6 +487,7 @@ npx tsx src/cli.ts lists
 ```
 
 #### Step 6: Test Environment Variable Override
+
 ```bash
 # Bypass encrypted store entirely (useful for CI/headless)
 export TODO_MCP_ACCESS_TOKEN="your-valid-access-token"
