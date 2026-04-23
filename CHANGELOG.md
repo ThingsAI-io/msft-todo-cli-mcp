@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1]
+
+### Changed
+
+- **Node.js minimum version**: Raised from 20 to 22
+- **README**: Added experimental disclaimer
+
+### Added
+
+- **CI workflow**: GitHub Actions — build, typecheck, and test on Ubuntu, macOS, and Windows (Node 22)
+
 ## [0.2.0]
 
 ### Security

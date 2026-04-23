@@ -1,6 +1,6 @@
 {
   "name": "@thingsai/todo-mcp-server",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A CLI-first tool for managing Microsoft To Do tasks, with an optional MCP server wrapper",
   "type": "module",
   "main": "dist/cli.js",
@@ -23,7 +23,7 @@
     "prepublishOnly": "npm run build"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "license": "MIT",
   "repository": {
