@@ -137,9 +137,9 @@ Here are example prompts you might give an AI agent connected to this MCP server
 
 ## Troubleshooting
 
-| Problem                  | Solution                                                                                            |
-| ------------------------ | --------------------------------------------------------------------------------------------------- |
-| "Authentication expired" | Re-run `todo setup` to refresh your credentials.                                                    |
-| Server not responding    | Check that the `TODO_MCP_CLIENT_ID` environment variable is set in your client configuration.       |
-| Permission errors        | Verify your Azure app registration has the **Tasks.ReadWrite** permission.                          |
-| Command not found        | Make sure `@thingsai/todo-mcp-server` is installed globally (`npm i -g @thingsai/todo-mcp-server`). |
+| Problem                  | Solution                                                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| "Authentication expired" | Re-run `todo setup` to refresh your credentials.                                                        |
+| Server not responding    | Check that the `TODO_MCP_CLIENT_ID` environment variable is set in your client configuration.           |
+| Permission errors        | Verify your Azure app registration has the **Tasks.ReadWrite** permission.                              |
+| Command not found        | Make sure `@thingsai/msft-todo-cli-mcp` is installed globally (`npm i -g @thingsai/msft-todo-cli-mcp`). |

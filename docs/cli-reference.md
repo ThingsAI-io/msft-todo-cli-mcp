@@ -1,6 +1,6 @@
 # CLI Reference
 
-Full command reference for `@thingsai/todo-mcp-server`.
+Full command reference for `@thingsai/msft-todo-cli-mcp`.
 
 ## Global Flags
 

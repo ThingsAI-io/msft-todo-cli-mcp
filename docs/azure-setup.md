@@ -1,6 +1,6 @@
 # Azure App Registration
 
-To use `@thingsai/todo-mcp-server`, you need an Azure AD app registration. This is free — no paid Azure subscription required. The app uses OAuth 2.0 with PKCE (a public client flow), so **no client secret is needed**.
+To use `@thingsai/msft-todo-cli-mcp`, you need an Azure AD app registration. This is free — no paid Azure subscription required. The app uses OAuth 2.0 with PKCE (a public client flow), so **no client secret is needed**.
 
 ---
 

@@ -1,6 +1,6 @@
 # Configuration
 
-Configuration reference for `@thingsai/todo-mcp-server`.
+Configuration reference for `@thingsai/msft-todo-cli-mcp`.
 
 ## Environment Variables
 
