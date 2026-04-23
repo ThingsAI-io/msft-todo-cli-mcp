@@ -49,15 +49,15 @@ The spec and audits were analyzed to produce an implementation plan (`spec/plan.
 
 Project scaffolding (package.json, tsconfig.json, types) was done first, then 7 agents were dispatched in parallel:
 
-| Agent | Work Unit | Files Created | Tests |
-|-------|-----------|--------------|-------|
-| Token Store | Encrypted token persistence | `src/auth/token-store.ts` | 11 |
-| Token Manager | Token loading + refresh + mutex | `src/auth/token-manager.ts` | 12 |
-| Auth Setup | OAuth PKCE setup flow | `src/auth/setup.ts` | 7 |
-| Graph Client | Graph API fetch wrapper | `src/graph/client.ts` | 19 |
-| Core Ops | Task lists, tasks, checklist CRUD | `src/core/*.ts` (3 files) | 27 |
-| CLI | CLI entry point + formatting | `src/cli.ts`, `src/format.ts` | 22 |
-| MCP Server | MCP server with 13 tools | `src/mcp.ts` | 8 |
+| Agent         | Work Unit                         | Files Created                 | Tests |
+| ------------- | --------------------------------- | ----------------------------- | ----- |
+| Token Store   | Encrypted token persistence       | `src/auth/token-store.ts`     | 11    |
+| Token Manager | Token loading + refresh + mutex   | `src/auth/token-manager.ts`   | 12    |
+| Auth Setup    | OAuth PKCE setup flow             | `src/auth/setup.ts`           | 7     |
+| Graph Client  | Graph API fetch wrapper           | `src/graph/client.ts`         | 19    |
+| Core Ops      | Task lists, tasks, checklist CRUD | `src/core/*.ts` (3 files)     | 27    |
+| CLI           | CLI entry point + formatting      | `src/cli.ts`, `src/format.ts` | 22    |
+| MCP Server    | MCP server with 13 tools          | `src/mcp.ts`                  | 8     |
 
 All 7 agents completed successfully. 106 tests passing, TypeScript clean, build clean.
 
@@ -126,15 +126,15 @@ After the core implementation, additional passes covered:
 
 ### Agent Timing
 
-| Phase | Agents | Wall-Clock Time | Notes |
-|-------|--------|----------------|-------|
-| Planning | 0 (inline) | ~5 min | Spec analysis, plan creation, 3 revision rounds |
-| Implementation | 7 parallel | ~8 min | All agents ran concurrently; longest was MCP server (~8.5 min) |
-| Packaging + README | 0 (inline) | ~1 min | package.json updates, npm link, README |
-| Documentation | 6 parallel | ~1.5 min | All doc agents ran concurrently; longest was security (~1.2 min) |
-| **Total** | **14** (incl. inline) | **~16 min** | From first prompt to fully documented, tested, and packaged |
+| Phase              | Agents                | Wall-Clock Time | Notes                                                            |
+| ------------------ | --------------------- | --------------- | ---------------------------------------------------------------- |
+| Planning           | 0 (inline)            | ~5 min          | Spec analysis, plan creation, 3 revision rounds                  |
+| Implementation     | 7 parallel            | ~8 min          | All agents ran concurrently; longest was MCP server (~8.5 min)   |
+| Packaging + README | 0 (inline)            | ~1 min          | package.json updates, npm link, README                           |
+| Documentation      | 6 parallel            | ~1.5 min        | All doc agents ran concurrently; longest was security (~1.2 min) |
+| **Total**          | **14** (incl. inline) | **~16 min**     | From first prompt to fully documented, tested, and packaged      |
 
-*Note: Token usage per phase was not captured by the session telemetry. Wall-clock times are approximate, measured from agent dispatch to last agent completion.*
+_Note: Token usage per phase was not captured by the session telemetry. Wall-clock times are approximate, measured from agent dispatch to last agent completion._
 
 ## Phase 4: Spec Feedback Loop
 
@@ -142,14 +142,14 @@ After testing the initial release, several gaps were discovered that required fo
 
 **Gaps identified and backported to `intent.md`:**
 
-| Gap | What was missing | Where added in spec |
-|-----|-----------------|-------------------|
-| Auto-auth in MCP serve | `todo serve` and `todo setup` were decoupled — MCP users had to run setup separately in a terminal without the env vars | OAuth Flow section |
-| `--client-id` CLI flag | Only env vars for passing client ID; terminal users had to `export` before running setup | CLI entry point commands |
-| Azure AD app creation | Spec assumed a client ID exists but never explained how to get one | New section after Token Storage |
-| npm packaging | No scoped package name, publish config, or `files` array | `package.json` essentials |
-| Documentation structure | Spec said "README" but not a `docs/` folder with dedicated guides | Implementation Order |
-| Versioning & CHANGELOG | No mention of semver, changelog format, or version sync between `package.json` and `mcp.ts` | New section after Definition of Done |
+| Gap                     | What was missing                                                                                                        | Where added in spec                  |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Auto-auth in MCP serve  | `todo serve` and `todo setup` were decoupled — MCP users had to run setup separately in a terminal without the env vars | OAuth Flow section                   |
+| `--client-id` CLI flag  | Only env vars for passing client ID; terminal users had to `export` before running setup                                | CLI entry point commands             |
+| Azure AD app creation   | Spec assumed a client ID exists but never explained how to get one                                                      | New section after Token Storage      |
+| npm packaging           | No scoped package name, publish config, or `files` array                                                                | `package.json` essentials            |
+| Documentation structure | Spec said "README" but not a `docs/` folder with dedicated guides                                                       | Implementation Order                 |
+| Versioning & CHANGELOG  | No mention of semver, changelog format, or version sync between `package.json` and `mcp.ts`                             | New section after Definition of Done |
 
 This "push-back-to-spec" cycle is a useful pattern: build from the spec, discover what's missing during real usage, then amend the spec so future builds from it are complete. The spec becomes a living document that improves with each implementation pass.
 
@@ -161,13 +161,13 @@ A full security audit and developer experience evaluation was conducted using fl
 
 Five specialized agents audited different aspects of the codebase simultaneously:
 
-| Agent | Focus Area | Key Findings |
-|-------|-----------|-------------|
-| Auth Security | OAuth flow, token storage | Missing CSRF state param, no file permissions on token file |
-| Graph API Client | HTTP client hardening | No redirect policy (Bearer token leak risk), no rate-limit handling, unstructured errors |
-| CLI/MCP Input Handling | Input validation, output safety | No ID validation (path traversal risk), no OData injection protection, no terminal escape sanitization |
-| Dependencies & Config | Build config, gitignore | Source maps published to npm, no key file patterns in .gitignore |
-| DX Evaluation | AI developer experience | Missing `.describe()` on MCP params, no single-item get tools, no structured error responses, no `--version` |
+| Agent                  | Focus Area                      | Key Findings                                                                                                 |
+| ---------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Auth Security          | OAuth flow, token storage       | Missing CSRF state param, no file permissions on token file                                                  |
+| Graph API Client       | HTTP client hardening           | No redirect policy (Bearer token leak risk), no rate-limit handling, unstructured errors                     |
+| CLI/MCP Input Handling | Input validation, output safety | No ID validation (path traversal risk), no OData injection protection, no terminal escape sanitization       |
+| Dependencies & Config  | Build config, gitignore         | Source maps published to npm, no key file patterns in .gitignore                                             |
+| DX Evaluation          | AI developer experience         | Missing `.describe()` on MCP params, no single-item get tools, no structured error responses, no `--version` |
 
 Result: 5 Medium, 7 Low, 3 Informational findings. DX score: B+ (good foundation, missing polish for AI consumers).
 
@@ -191,4 +191,3 @@ After implementation, `spec/intent.md` was retroactively updated with the securi
 - **15 MCP tools** + full CLI (was 13)
 - **23 sub-agents** used total across all phases (was 14)
 - **v0.2.0** released with all security and DX improvements
-

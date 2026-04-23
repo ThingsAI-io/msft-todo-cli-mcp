@@ -23,28 +23,28 @@ An MCP server by Jordan Burke (fork of jhirono/todoMCP) that lets AI assistants 
 
 ### Credential Handling
 
-| Area | Finding | Severity |
-|---|---|---|
-| Token storage | `tokens.json` on disk in plaintext. **Includes `clientId` and `clientSecret` alongside tokens.** No encryption. | ⚠️ Medium |
-| Token logging | Access tokens are explicitly `[REDACTED]` in `makeGraphRequest()`. Auth server logs token structure keys but not values. `console.error` logs truncated API responses (first 200 chars — could contain task content). | ⚠️ Low |
-| PII logging | `auth-server.ts` sets `piiLoggingEnabled: true` on MSAL logger, which pipes through `console.log`. This can expose user identifiers in logs. | ⚠️ Medium |
-| Claude config auto-update | `token-manager.ts` and `setup.ts` auto-write tokens into Claude Desktop's `claude_desktop_config.json` — modifying another application's config file without explicit consent. | ⚠️ Medium |
-| Env vars | Tokens can be passed via `MS_TODO_ACCESS_TOKEN` / `MS_TODO_REFRESH_TOKEN` env vars — standard pattern, acceptable. | ✅ OK |
+| Area                      | Finding                                                                                                                                                                                                               | Severity  |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| Token storage             | `tokens.json` on disk in plaintext. **Includes `clientId` and `clientSecret` alongside tokens.** No encryption.                                                                                                       | ⚠️ Medium |
+| Token logging             | Access tokens are explicitly `[REDACTED]` in `makeGraphRequest()`. Auth server logs token structure keys but not values. `console.error` logs truncated API responses (first 200 chars — could contain task content). | ⚠️ Low    |
+| PII logging               | `auth-server.ts` sets `piiLoggingEnabled: true` on MSAL logger, which pipes through `console.log`. This can expose user identifiers in logs.                                                                          | ⚠️ Medium |
+| Claude config auto-update | `token-manager.ts` and `setup.ts` auto-write tokens into Claude Desktop's `claude_desktop_config.json` — modifying another application's config file without explicit consent.                                        | ⚠️ Medium |
+| Env vars                  | Tokens can be passed via `MS_TODO_ACCESS_TOKEN` / `MS_TODO_REFRESH_TOKEN` env vars — standard pattern, acceptable.                                                                                                    | ✅ OK     |
 
 ### Scope of Access (Microsoft Graph API)
 
 Scopes requested during auth flow (`auth-server.ts`):
 
-| Scope | Purpose | Least-privilege? |
-|---|---|---|
-| `Tasks.Read` | Read user's tasks | ✅ Needed |
-| `Tasks.ReadWrite` | Read/write user's tasks | ✅ Needed |
-| `Tasks.Read.Shared` | Read shared tasks | ⚠️ Broader than needed |
-| `Tasks.ReadWrite.Shared` | Read/write shared tasks | ⚠️ Broader than needed |
-| `User.Read` | Read user profile | ✅ Used for account type detection |
-| `offline_access` | Refresh tokens | ✅ Standard |
-| `openid` | OpenID Connect | ✅ Standard |
-| `profile` | Profile info | ⚠️ Not strictly needed |
+| Scope                    | Purpose                 | Least-privilege?                   |
+| ------------------------ | ----------------------- | ---------------------------------- |
+| `Tasks.Read`             | Read user's tasks       | ✅ Needed                          |
+| `Tasks.ReadWrite`        | Read/write user's tasks | ✅ Needed                          |
+| `Tasks.Read.Shared`      | Read shared tasks       | ⚠️ Broader than needed             |
+| `Tasks.ReadWrite.Shared` | Read/write shared tasks | ⚠️ Broader than needed             |
+| `User.Read`              | Read user profile       | ✅ Used for account type detection |
+| `offline_access`         | Refresh tokens          | ✅ Standard                        |
+| `openid`                 | OpenID Connect          | ✅ Standard                        |
+| `profile`                | Profile info            | ⚠️ Not strictly needed             |
 
 **Verdict**: Not fully least-privilege. The `.Shared` scopes grant access to tasks shared with the user across the organization — broader than personal To Do access. The `profile` scope is unnecessary.
 
@@ -64,13 +64,13 @@ Scopes requested during auth flow (`auth-server.ts`):
 
 5 runtime dependencies, 167 total packages after resolution:
 
-| Package | Purpose | Risk |
-|---|---|---|
-| `@azure/msal-node` ^3.8.1 | Microsoft auth library (official) | ✅ Trusted |
-| `@modelcontextprotocol/sdk` ^1.21.1 | MCP protocol SDK (official) | ✅ Trusted |
-| `dotenv` ^16.6.1 | Env var loading | ✅ Standard |
-| `express` ^5.1.0 | Auth server (local only) | ✅ Standard |
-| `zod` ^3.25.76 | Schema validation | ✅ Standard |
+| Package                             | Purpose                           | Risk        |
+| ----------------------------------- | --------------------------------- | ----------- |
+| `@azure/msal-node` ^3.8.1           | Microsoft auth library (official) | ✅ Trusted  |
+| `@modelcontextprotocol/sdk` ^1.21.1 | MCP protocol SDK (official)       | ✅ Trusted  |
+| `dotenv` ^16.6.1                    | Env var loading                   | ✅ Standard |
+| `express` ^5.1.0                    | Auth server (local only)          | ✅ Standard |
+| `zod` ^3.25.76                      | Schema validation                 | ✅ Standard |
 
 `npm audit`: **0 vulnerabilities** found. All dependencies are well-known, mainstream packages.
 
@@ -88,6 +88,7 @@ Scopes requested during auth flow (`auth-server.ts`):
 ### MCP Protocol Compliance
 
 Uses `@modelcontextprotocol/sdk` properly:
+
 - `McpServer` instantiation with name/version
 - `StdioServerTransport` for communication
 - Tools registered via `server.tool()` with Zod schemas for parameter validation
@@ -147,6 +148,7 @@ Potential integration for managing Microsoft To Do tasks through GitHub Copilot 
 The code is honest — it does what it claims, contacts only Microsoft endpoints, has no telemetry or exfiltration vectors. The dependency tree is clean and minimal. However, it stores OAuth client secrets in plaintext, enables PII logging, requests broader scopes than needed, and auto-modifies external application configs. These are not malicious, but they reflect a prototype-quality security posture.
 
 **If adopting**, fork and fix:
+
 1. Remove `clientSecret` from `tokens.json` — use env vars or OS keychain
 2. Set `piiLoggingEnabled: false`
 3. Remove `Tasks.Read.Shared` and `Tasks.ReadWrite.Shared` scopes (unless shared tasks are needed)

@@ -80,7 +80,9 @@ export function decrypt(buffer: Buffer): TokenData {
     const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
     return JSON.parse(decrypted.toString('utf8')) as TokenData;
   } catch {
-    throw new Error('Token decryption failed: data is corrupted or was encrypted on a different machine');
+    throw new Error(
+      'Token decryption failed: data is corrupted or was encrypted on a different machine',
+    );
   }
 }
 

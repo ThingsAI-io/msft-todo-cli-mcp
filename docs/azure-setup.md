@@ -65,11 +65,11 @@ This prints your **Application (client) ID**. Save it.
 
 **`--sign-in-audience` options:**
 
-| Value | Description |
-|---|---|
-| `PersonalMicrosoftAccount` | Personal Microsoft accounts only (@outlook.com, @hotmail.com, @live.com) |
-| `AzureADandPersonalMicrosoftAccount` | Work/school + personal accounts |
-| `AzureADMyOrg` | Single organization only |
+| Value                                | Description                                                              |
+| ------------------------------------ | ------------------------------------------------------------------------ |
+| `PersonalMicrosoftAccount`           | Personal Microsoft accounts only (@outlook.com, @hotmail.com, @live.com) |
+| `AzureADandPersonalMicrosoftAccount` | Work/school + personal accounts                                          |
+| `AzureADMyOrg`                       | Single organization only                                                 |
 
 ### 2. Add Tasks.ReadWrite permission
 
@@ -88,10 +88,10 @@ Replace `<your-client-id>` with the ID from the previous step.
 
 ## Account Type Guidance
 
-| Account type | Tenant value | Example domains |
-|---|---|---|
-| Personal accounts | `consumers` (the default) | @outlook.com, @hotmail.com, @live.com |
-| Work/school accounts | `common` or your org's tenant ID | @yourcompany.com |
+| Account type         | Tenant value                     | Example domains                       |
+| -------------------- | -------------------------------- | ------------------------------------- |
+| Personal accounts    | `consumers` (the default)        | @outlook.com, @hotmail.com, @live.com |
+| Work/school accounts | `common` or your org's tenant ID | @yourcompany.com                      |
 
 To set the tenant explicitly:
 

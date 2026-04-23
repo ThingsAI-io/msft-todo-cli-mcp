@@ -34,9 +34,7 @@ async function refreshAccessToken(
   }
 
   if (!response.ok) {
-    throw new Error(
-      "Authentication expired. Please re-run 'todo setup' to re-authenticate.",
-    );
+    throw new Error("Authentication expired. Please re-run 'todo setup' to re-authenticate.");
   }
 
   const json = (await response.json()) as {
@@ -93,9 +91,7 @@ export async function getAccessToken(): Promise<string> {
       stored = load();
     }
     if (!stored) {
-      throw new Error(
-        "No authentication found. Run 'todo setup' to authenticate.",
-      );
+      throw new Error("No authentication found. Run 'todo setup' to authenticate.");
     }
   }
 
@@ -112,19 +108,13 @@ export async function getAccessToken(): Promise<string> {
 export async function forceRefresh(): Promise<string> {
   const stored = load();
   if (!stored) {
-    throw new Error(
-      "No authentication found. Run 'todo setup' to authenticate.",
-    );
+    throw new Error("No authentication found. Run 'todo setup' to authenticate.");
   }
 
   return doRefresh(stored.refreshToken, stored.clientId, stored.tenant);
 }
 
-function doRefresh(
-  refreshToken: string,
-  clientId: string,
-  tenant: string,
-): Promise<string> {
+function doRefresh(refreshToken: string, clientId: string, tenant: string): Promise<string> {
   if (!refreshPromise) {
     refreshPromise = refreshAccessToken(refreshToken, clientId, tenant)
       .then((tokens) => tokens.accessToken)

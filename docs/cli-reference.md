@@ -4,10 +4,10 @@ Full command reference for `@thingsai/todo-mcp-server`.
 
 ## Global Flags
 
-| Flag        | Description                                      |
-| ----------- | ------------------------------------------------ |
+| Flag        | Description                                                 |
+| ----------- | ----------------------------------------------------------- |
 | `--json`    | Output in JSON format (available on all read/list commands) |
-| `--version` | Show the version number |
+| `--version` | Show the version number                                     |
 
 > **Note:** Unknown flags are rejected. The CLI uses strict argument parsing to prevent silent errors.
 
@@ -109,17 +109,17 @@ Use `--status` to filter by task status (`notStarted`, `inProgress`, `completed`
 
 Create a task.
 
-| Flag             | Required | Description                                                                 |
-| ---------------- | -------- | --------------------------------------------------------------------------- |
-| `--list <id>`    | Yes      | Task list ID                                                                |
-| `--title <text>` | Yes      | Task title                                                                  |
-| `--due <date>`   | No       | Due date (e.g. `2026-04-20`)                                                |
-| `--importance`   | No       | `low`, `normal`, or `high`                                                  |
-| `--body <text>`  | No       | Task body / notes                                                           |
-| `--reminder`     | No       | Reminder date-time (e.g. `2026-04-20T09:00:00Z`)                            |
-| `--start <date>` | No       | Start date                                                                  |
-| `--status`       | No       | `notStarted`, `inProgress`, `completed`, `waitingOnOthers`, or `deferred`   |
-| `--categories`   | No       | Comma-separated categories (e.g. `groceries,errands`)                       |
+| Flag             | Required | Description                                                               |
+| ---------------- | -------- | ------------------------------------------------------------------------- |
+| `--list <id>`    | Yes      | Task list ID                                                              |
+| `--title <text>` | Yes      | Task title                                                                |
+| `--due <date>`   | No       | Due date (e.g. `2026-04-20`)                                              |
+| `--importance`   | No       | `low`, `normal`, or `high`                                                |
+| `--body <text>`  | No       | Task body / notes                                                         |
+| `--reminder`     | No       | Reminder date-time (e.g. `2026-04-20T09:00:00Z`)                          |
+| `--start <date>` | No       | Start date                                                                |
+| `--status`       | No       | `notStarted`, `inProgress`, `completed`, `waitingOnOthers`, or `deferred` |
+| `--categories`   | No       | Comma-separated categories (e.g. `groceries,errands`)                     |
 
 ```bash
 # Minimal
@@ -137,18 +137,18 @@ todo tasks create --list AAMkAD... --title "Buy milk" \
 
 Update a task. All fields except `--list` and `--task` are optional. Pass an empty string to date fields to clear them.
 
-| Flag             | Required | Description        |
-| ---------------- | -------- | ------------------ |
-| `--list <id>`    | Yes      | Task list ID       |
-| `--task <id>`    | Yes      | Task ID            |
-| `--title`        | No       | New title          |
-| `--due`          | No       | New due date       |
-| `--importance`   | No       | New importance     |
-| `--body`         | No       | New body text      |
-| `--reminder`     | No       | New reminder       |
-| `--start`        | No       | New start date     |
-| `--status`       | No       | New status         |
-| `--categories`   | No       | New categories     |
+| Flag           | Required | Description    |
+| -------------- | -------- | -------------- |
+| `--list <id>`  | Yes      | Task list ID   |
+| `--task <id>`  | Yes      | Task ID        |
+| `--title`      | No       | New title      |
+| `--due`        | No       | New due date   |
+| `--importance` | No       | New importance |
+| `--body`       | No       | New body text  |
+| `--reminder`   | No       | New reminder   |
+| `--start`      | No       | New start date |
+| `--status`     | No       | New status     |
+| `--categories` | No       | New categories |
 
 ```bash
 todo tasks update --list AAMkAD... --task AAMkAD... --title "Buy oat milk"
@@ -192,11 +192,11 @@ todo checklist --list AAMkAD... --task AAMkAD... --json
 
 Add a checklist item.
 
-| Flag             | Required | Description        |
-| ---------------- | -------- | ------------------ |
-| `--list <id>`    | Yes      | Task list ID       |
-| `--task <id>`    | Yes      | Task ID            |
-| `--text <text>`  | Yes      | Item display text  |
+| Flag            | Required | Description       |
+| --------------- | -------- | ----------------- |
+| `--list <id>`   | Yes      | Task list ID      |
+| `--task <id>`   | Yes      | Task ID           |
+| `--text <text>` | Yes      | Item display text |
 
 ```bash
 todo checklist add --list AAMkAD... --task AAMkAD... --text "Check expiry date"
@@ -206,14 +206,14 @@ todo checklist add --list AAMkAD... --task AAMkAD... --text "Check expiry date"
 
 Update a checklist item.
 
-| Flag             | Required | Description                  |
-| ---------------- | -------- | ---------------------------- |
-| `--list <id>`    | Yes      | Task list ID                 |
-| `--task <id>`    | Yes      | Task ID                      |
-| `--item <id>`    | Yes      | Checklist item ID            |
-| `--text <text>`  | No       | New display text             |
-| `--checked`      | No       | Mark the item as checked     |
-| `--unchecked`    | No       | Mark the item as unchecked   |
+| Flag            | Required | Description                |
+| --------------- | -------- | -------------------------- |
+| `--list <id>`   | Yes      | Task list ID               |
+| `--task <id>`   | Yes      | Task ID                    |
+| `--item <id>`   | Yes      | Checklist item ID          |
+| `--text <text>` | No       | New display text           |
+| `--checked`     | No       | Mark the item as checked   |
+| `--unchecked`   | No       | Mark the item as unchecked |
 
 ```bash
 todo checklist update --list AAMkAD... --task AAMkAD... --item AAMkAD... --checked
@@ -271,7 +271,7 @@ todo checklist --list AAMkAD... --task AAMkAD... --json
 
 ## Exit Codes
 
-| Code | Meaning                                          |
-| ---- | ------------------------------------------------ |
-| `0`  | Success                                          |
+| Code | Meaning                                            |
+| ---- | -------------------------------------------------- |
+| `0`  | Success                                            |
 | `1`  | Error (missing arguments, auth failure, API error) |

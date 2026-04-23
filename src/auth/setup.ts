@@ -1,19 +1,19 @@
-import { createHash, randomBytes } from "node:crypto";
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { exec } from "node:child_process";
-import { URL } from "node:url";
-import type { TokenData } from "../types.js";
-import { save } from "./token-store.js";
+import { createHash, randomBytes } from 'node:crypto';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { exec } from 'node:child_process';
+import { URL } from 'node:url';
+import type { TokenData } from '../types.js';
+import { save } from './token-store.js';
 
-const REDIRECT_URI = "http://localhost:3847/callback";
-const SCOPES = "Tasks.ReadWrite offline_access";
+const REDIRECT_URI = 'http://localhost:3847/callback';
+const SCOPES = 'Tasks.ReadWrite offline_access';
 
 /** Generate a cryptographically random PKCE code verifier (43-128 chars, URL-safe). */
 export function generateCodeVerifier(): string {
-  const unreserved = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+  const unreserved = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
   const length = 128;
   const bytes = randomBytes(length);
-  let verifier = "";
+  let verifier = '';
   for (let i = 0; i < length; i++) {
     verifier += unreserved[bytes[i] % unreserved.length];
   }
@@ -22,8 +22,8 @@ export function generateCodeVerifier(): string {
 
 /** Compute the PKCE code challenge: base64url(SHA-256(verifier)), no padding. */
 export function generateCodeChallenge(verifier: string): string {
-  const hash = createHash("sha256").update(verifier).digest("base64");
-  return hash.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const hash = createHash('sha256').update(verifier).digest('base64');
+  return hash.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /** Build the Microsoft authorization URL with all required params. */
@@ -36,12 +36,12 @@ export function buildAuthorizationUrl(
   const base = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize`;
   const params = new URLSearchParams({
     client_id: clientId,
-    response_type: "code",
+    response_type: 'code',
     redirect_uri: REDIRECT_URI,
     scope: SCOPES,
     code_challenge: codeChallenge,
-    code_challenge_method: "S256",
-    response_mode: "query",
+    code_challenge_method: 'S256',
+    response_mode: 'query',
     state,
   });
   return { url: `${base}?${params.toString()}`, state };
@@ -50,12 +50,14 @@ export function buildAuthorizationUrl(
 function openBrowser(url: string): void {
   const platform = process.platform;
   const cmd =
-    platform === "win32" ? `start "" "${url}"` :
-    platform === "darwin" ? `open "${url}"` :
-    `xdg-open "${url}"`;
+    platform === 'win32'
+      ? `start "" "${url}"`
+      : platform === 'darwin'
+        ? `open "${url}"`
+        : `xdg-open "${url}"`;
   exec(cmd, (err) => {
     if (err) {
-      console.error("Could not open browser automatically. Please visit:");
+      console.error('Could not open browser automatically. Please visit:');
       console.log(url);
     }
   });
@@ -70,22 +72,22 @@ async function exchangeCodeForTokens(
   const tokenUrl = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`;
   const body = new URLSearchParams({
     client_id: clientId,
-    grant_type: "authorization_code",
+    grant_type: 'authorization_code',
     code,
     redirect_uri: REDIRECT_URI,
     code_verifier: codeVerifier,
   });
 
   const res = await fetch(tokenUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
   });
 
   if (!res.ok) {
     let errorDetail = `status ${res.status}`;
     try {
-      const errorBody = await res.json() as { error?: string; error_description?: string };
+      const errorBody = (await res.json()) as { error?: string; error_description?: string };
       if (errorBody.error) {
         errorDetail = `${errorBody.error}: ${errorBody.error_description ?? 'Unknown error'}`;
       }
@@ -113,15 +115,19 @@ const SUCCESS_HTML = `<!DOCTYPE html>
 
 /** Run the full interactive OAuth PKCE setup flow.
  *  When `silent` is true, all user-facing messages go to stderr (safe for MCP stdio). */
-export async function runSetup(options?: { clientId?: string; tenant?: string; silent?: boolean }): Promise<void> {
-  const clientId = options?.clientId ?? process.env["TODO_MCP_CLIENT_ID"];
+export async function runSetup(options?: {
+  clientId?: string;
+  tenant?: string;
+  silent?: boolean;
+}): Promise<void> {
+  const clientId = options?.clientId ?? process.env['TODO_MCP_CLIENT_ID'];
   if (!clientId) {
     throw new Error(
-      "TODO_MCP_CLIENT_ID environment variable is required. " +
-      "Set it to your Azure AD app registration client ID.",
+      'TODO_MCP_CLIENT_ID environment variable is required. ' +
+        'Set it to your Azure AD app registration client ID.',
     );
   }
-  const tenant = options?.tenant ?? process.env["TODO_MCP_TENANT"] ?? "consumers";
+  const tenant = options?.tenant ?? process.env['TODO_MCP_TENANT'] ?? 'consumers';
   const log = options?.silent ? (...args: unknown[]) => console.error(...args) : console.log;
 
   const codeVerifier = generateCodeVerifier();
@@ -129,95 +135,88 @@ export async function runSetup(options?: { clientId?: string; tenant?: string; s
   const { url: authUrl, state } = buildAuthorizationUrl(clientId, tenant, codeChallenge);
 
   await new Promise<void>((resolve, reject) => {
-    const server = createServer(
-      async (req: IncomingMessage, res: ServerResponse) => {
-        try {
-          const url = new URL(req.url ?? "/", `http://localhost:3847`);
-          if (url.pathname !== "/callback") {
-            res.writeHead(404);
-            res.end("Not found");
-            return;
-          }
+    const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+      try {
+        const url = new URL(req.url ?? '/', `http://localhost:3847`);
+        if (url.pathname !== '/callback') {
+          res.writeHead(404);
+          res.end('Not found');
+          return;
+        }
 
-          const returnedState = url.searchParams.get("state");
-          if (returnedState !== state) {
-            res.writeHead(400, { "Content-Type": "text/html" });
-            res.end("<h1>Error: Invalid state parameter</h1><p>Possible CSRF attack.</p>");
-            reject(new Error("Authorization failed: state parameter mismatch"));
-            server.close();
-            return;
-          }
-
-          const code = url.searchParams.get("code");
-          if (!code) {
-            const error = url.searchParams.get("error") ?? "unknown";
-            const desc =
-              url.searchParams.get("error_description") ?? "No authorization code received";
-            res.writeHead(400, { "Content-Type": "text/html" });
-            res.end(`<h1>Error: ${error}</h1><p>${desc}</p>`);
-            reject(new Error(`Authorization failed: ${error} — ${desc}`));
-            server.close();
-            return;
-          }
-
-          const tokens = await exchangeCodeForTokens(
-            clientId,
-            tenant,
-            code,
-            codeVerifier,
-          );
-
-          const tokenData: TokenData = {
-            accessToken: tokens.access_token,
-            refreshToken: tokens.refresh_token,
-            expiresAt: Date.now() + tokens.expires_in * 1000,
-            clientId,
-            tenant,
-          };
-          save(tokenData);
-
-          res.writeHead(200, { "Content-Type": "text/html" });
-          res.end(SUCCESS_HTML);
-
+        const returnedState = url.searchParams.get('state');
+        if (returnedState !== state) {
+          res.writeHead(400, { 'Content-Type': 'text/html' });
+          res.end('<h1>Error: Invalid state parameter</h1><p>Possible CSRF attack.</p>');
+          reject(new Error('Authorization failed: state parameter mismatch'));
           server.close();
+          return;
+        }
 
-          log(`\n✓ Authentication successful!\n`);
-          if (!options?.silent) {
-            log(`To use with VS Code, add to settings.json:`);
-            log(
-              JSON.stringify(
-                {
-                  mcp: {
-                    servers: {
-                      todo: {
-                        command: "todo",
-                        args: ["serve"],
-                      },
+        const code = url.searchParams.get('code');
+        if (!code) {
+          const error = url.searchParams.get('error') ?? 'unknown';
+          const desc =
+            url.searchParams.get('error_description') ?? 'No authorization code received';
+          res.writeHead(400, { 'Content-Type': 'text/html' });
+          res.end(`<h1>Error: ${error}</h1><p>${desc}</p>`);
+          reject(new Error(`Authorization failed: ${error} — ${desc}`));
+          server.close();
+          return;
+        }
+
+        const tokens = await exchangeCodeForTokens(clientId, tenant, code, codeVerifier);
+
+        const tokenData: TokenData = {
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          expiresAt: Date.now() + tokens.expires_in * 1000,
+          clientId,
+          tenant,
+        };
+        save(tokenData);
+
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(SUCCESS_HTML);
+
+        server.close();
+
+        log(`\n✓ Authentication successful!\n`);
+        if (!options?.silent) {
+          log(`To use with VS Code, add to settings.json:`);
+          log(
+            JSON.stringify(
+              {
+                mcp: {
+                  servers: {
+                    todo: {
+                      command: 'todo',
+                      args: ['serve'],
                     },
                   },
                 },
-                null,
-                2,
-              ),
-            );
-          }
-
-          resolve();
-        } catch (err) {
-          if (!res.headersSent) {
-            res.writeHead(500);
-            res.end("Internal error");
-          }
-          reject(err);
+              },
+              null,
+              2,
+            ),
+          );
         }
-      },
-    );
+
+        resolve();
+      } catch (err) {
+        if (!res.headersSent) {
+          res.writeHead(500);
+          res.end('Internal error');
+        }
+        reject(err);
+      }
+    });
 
     server.listen(3847, () => {
-      log("Waiting for authentication... (a browser window should open)");
+      log('Waiting for authentication... (a browser window should open)');
       openBrowser(authUrl);
     });
 
-    server.on("error", reject);
+    server.on('error', reject);
   });
 }

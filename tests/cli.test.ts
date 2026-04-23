@@ -60,38 +60,87 @@ vi.mock('../src/graph/client.js', () => ({
 
 vi.mock('../src/core/task-lists.js', () => ({
   listTaskLists: vi.fn().mockResolvedValue([]),
-  createTaskList: vi.fn().mockResolvedValue({ id: 'new-list', displayName: 'Groceries', isOwner: true, isShared: false, wellknownListName: 'none' }),
-  updateTaskList: vi.fn().mockResolvedValue({ id: 'list-123', displayName: 'New Name', isOwner: true, isShared: false, wellknownListName: 'none' }),
+  createTaskList: vi.fn().mockResolvedValue({
+    id: 'new-list',
+    displayName: 'Groceries',
+    isOwner: true,
+    isShared: false,
+    wellknownListName: 'none',
+  }),
+  updateTaskList: vi.fn().mockResolvedValue({
+    id: 'list-123',
+    displayName: 'New Name',
+    isOwner: true,
+    isShared: false,
+    wellknownListName: 'none',
+  }),
   deleteTaskList: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('../src/core/tasks.js', () => ({
   listTasks: vi.fn().mockResolvedValue([]),
   createTask: vi.fn().mockResolvedValue({
-    id: 'task-new', title: 'Test', status: 'notStarted', importance: 'normal',
-    isReminderOn: false, body: { content: '', contentType: 'text' },
-    dueDateTime: null, reminderDateTime: null, startDateTime: null, completedDateTime: null,
-    categories: [], createdDateTime: '2025-01-01T00:00:00Z', lastModifiedDateTime: '2025-01-01T00:00:00Z',
+    id: 'task-new',
+    title: 'Test',
+    status: 'notStarted',
+    importance: 'normal',
+    isReminderOn: false,
+    body: { content: '', contentType: 'text' },
+    dueDateTime: null,
+    reminderDateTime: null,
+    startDateTime: null,
+    completedDateTime: null,
+    categories: [],
+    createdDateTime: '2025-01-01T00:00:00Z',
+    lastModifiedDateTime: '2025-01-01T00:00:00Z',
   }),
   updateTask: vi.fn().mockResolvedValue({
-    id: 'task-456', title: 'New', status: 'notStarted', importance: 'normal',
-    isReminderOn: false, body: { content: '', contentType: 'text' },
-    dueDateTime: null, reminderDateTime: null, startDateTime: null, completedDateTime: null,
-    categories: [], createdDateTime: '2025-01-01T00:00:00Z', lastModifiedDateTime: '2025-01-01T00:00:00Z',
+    id: 'task-456',
+    title: 'New',
+    status: 'notStarted',
+    importance: 'normal',
+    isReminderOn: false,
+    body: { content: '', contentType: 'text' },
+    dueDateTime: null,
+    reminderDateTime: null,
+    startDateTime: null,
+    completedDateTime: null,
+    categories: [],
+    createdDateTime: '2025-01-01T00:00:00Z',
+    lastModifiedDateTime: '2025-01-01T00:00:00Z',
   }),
   deleteTask: vi.fn().mockResolvedValue(undefined),
   completeTask: vi.fn().mockResolvedValue({
-    id: 'task-456', title: 'Done', status: 'completed', importance: 'normal',
-    isReminderOn: false, body: { content: '', contentType: 'text' },
-    dueDateTime: null, reminderDateTime: null, startDateTime: null, completedDateTime: null,
-    categories: [], createdDateTime: '2025-01-01T00:00:00Z', lastModifiedDateTime: '2025-01-01T00:00:00Z',
+    id: 'task-456',
+    title: 'Done',
+    status: 'completed',
+    importance: 'normal',
+    isReminderOn: false,
+    body: { content: '', contentType: 'text' },
+    dueDateTime: null,
+    reminderDateTime: null,
+    startDateTime: null,
+    completedDateTime: null,
+    categories: [],
+    createdDateTime: '2025-01-01T00:00:00Z',
+    lastModifiedDateTime: '2025-01-01T00:00:00Z',
   }),
 }));
 
 vi.mock('../src/core/checklist-items.js', () => ({
   listChecklistItems: vi.fn().mockResolvedValue([]),
-  createChecklistItem: vi.fn().mockResolvedValue({ id: 'item-new', displayName: 'Step', isChecked: false, createdDateTime: '2025-01-01T00:00:00Z' }),
-  updateChecklistItem: vi.fn().mockResolvedValue({ id: 'iid', displayName: 'New', isChecked: false, createdDateTime: '2025-01-01T00:00:00Z' }),
+  createChecklistItem: vi.fn().mockResolvedValue({
+    id: 'item-new',
+    displayName: 'Step',
+    isChecked: false,
+    createdDateTime: '2025-01-01T00:00:00Z',
+  }),
+  updateChecklistItem: vi.fn().mockResolvedValue({
+    id: 'iid',
+    displayName: 'New',
+    isChecked: false,
+    createdDateTime: '2025-01-01T00:00:00Z',
+  }),
   deleteChecklistItem: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -99,9 +148,12 @@ vi.mock('../src/core/checklist-items.js', () => ({
 const { run } = await import('../src/cli.js');
 const { runSetup } = await import('../src/auth/setup.js');
 const { startMcpServer } = await import('../src/mcp.js');
-const { listTaskLists, createTaskList, updateTaskList, deleteTaskList } = await import('../src/core/task-lists.js');
-const { listTasks, createTask, updateTask, deleteTask, completeTask } = await import('../src/core/tasks.js');
-const { listChecklistItems, createChecklistItem, updateChecklistItem, deleteChecklistItem } = await import('../src/core/checklist-items.js');
+const { listTaskLists, createTaskList, updateTaskList, deleteTaskList } =
+  await import('../src/core/task-lists.js');
+const { listTasks, createTask, updateTask, deleteTask, completeTask } =
+  await import('../src/core/tasks.js');
+const { listChecklistItems, createChecklistItem, updateChecklistItem, deleteChecklistItem } =
+  await import('../src/core/checklist-items.js');
 
 // Format module (real, not mocked)
 const format = await import('../src/format.js');
@@ -115,9 +167,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
   errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-  exitSpy = vi.spyOn(process, 'exit').mockImplementation((code?: number | string | null | undefined) => {
-    throw new Error(`process.exit(${code})`);
-  });
+  exitSpy = vi
+    .spyOn(process, 'exit')
+    .mockImplementation((code?: number | string | null | undefined) => {
+      throw new Error(`process.exit(${code})`);
+    });
 });
 
 afterEach(() => {
@@ -161,9 +215,18 @@ describe('CLI command routing', () => {
 
   it('7. tasks create with all flags passes them correctly', async () => {
     await run([
-      'tasks', 'create', '--list', 'list-123',
-      '--title', 'Test', '--due', '2026-04-20',
-      '--importance', 'high', '--body', 'notes',
+      'tasks',
+      'create',
+      '--list',
+      'list-123',
+      '--title',
+      'Test',
+      '--due',
+      '2026-04-20',
+      '--importance',
+      'high',
+      '--body',
+      'notes',
     ]);
     expect(createTask).toHaveBeenCalledWith(expect.anything(), 'list-123', {
       title: 'Test',
@@ -175,7 +238,9 @@ describe('CLI command routing', () => {
 
   it('8. tasks update routes correctly', async () => {
     await run(['tasks', 'update', '--list', 'list-123', '--task', 'task-456', '--title', 'New']);
-    expect(updateTask).toHaveBeenCalledWith(expect.anything(), 'list-123', 'task-456', { title: 'New' });
+    expect(updateTask).toHaveBeenCalledWith(expect.anything(), 'list-123', 'task-456', {
+      title: 'New',
+    });
   });
 
   it('9. tasks delete routes correctly', async () => {
@@ -199,8 +264,21 @@ describe('CLI command routing', () => {
   });
 
   it('13. checklist update routes correctly', async () => {
-    await run(['checklist', 'update', '--list', 'lid', '--task', 'tid', '--item', 'iid', '--text', 'New']);
-    expect(updateChecklistItem).toHaveBeenCalledWith(expect.anything(), 'lid', 'tid', 'iid', { displayName: 'New' });
+    await run([
+      'checklist',
+      'update',
+      '--list',
+      'lid',
+      '--task',
+      'tid',
+      '--item',
+      'iid',
+      '--text',
+      'New',
+    ]);
+    expect(updateChecklistItem).toHaveBeenCalledWith(expect.anything(), 'lid', 'tid', 'iid', {
+      displayName: 'New',
+    });
   });
 
   it('14. checklist delete routes correctly', async () => {

@@ -60,4 +60,3 @@ Add to VS Code `settings.json` for Copilot integration:
 ## License
 
 MIT
-

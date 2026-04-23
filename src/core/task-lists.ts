@@ -6,16 +6,25 @@ export async function listTaskLists(client: GraphClient): Promise<TodoTaskList[]
   return response?.value ?? [];
 }
 
-export async function createTaskList(client: GraphClient, displayName: string): Promise<TodoTaskList> {
+export async function createTaskList(
+  client: GraphClient,
+  displayName: string,
+): Promise<TodoTaskList> {
   if (!displayName) throw new Error('displayName is required');
   const response = await client.request<TodoTaskList>('POST', '/me/todo/lists', { displayName });
   return response!;
 }
 
-export async function updateTaskList(client: GraphClient, listId: string, displayName: string): Promise<TodoTaskList> {
+export async function updateTaskList(
+  client: GraphClient,
+  listId: string,
+  displayName: string,
+): Promise<TodoTaskList> {
   validateId(listId, 'listId');
   if (!displayName) throw new Error('displayName is required');
-  const response = await client.request<TodoTaskList>('PATCH', `/me/todo/lists/${listId}`, { displayName });
+  const response = await client.request<TodoTaskList>('PATCH', `/me/todo/lists/${listId}`, {
+    displayName,
+  });
   return response!;
 }
 

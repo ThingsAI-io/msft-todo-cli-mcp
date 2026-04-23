@@ -60,23 +60,23 @@ Any MCP client that supports stdio transport can use this server. The command is
 
 The server exposes 15 tools across three categories.
 
-| # | Tool | Description | Parameters |
-|---|------|-------------|------------|
-| 1 | `list-task-lists` | List all task lists | _(none)_ |
-| 2 | `get-task-list` | Get a single task list by ID | `listId` (string, **required**) |
-| 3 | `create-task-list` | Create a new task list | `displayName` (string, **required**) |
-| 4 | `update-task-list` | Update a task list's name | `listId` (string, **required**), `displayName` (string, **required**) |
-| 5 | `delete-task-list` | Delete a task list | `listId` (string, **required**) |
-| 6 | `list-tasks` | List tasks in a task list | `listId` (string, **required**), `status` (enum, optional), `top` (number, optional, default: 100), `filter` (string, optional — OData $filter expression), `orderby` (string, optional — OData $orderby expression) |
-| 7 | `get-task` | Get a single task by ID | `listId` (string, **required**), `taskId` (string, **required**) |
-| 8 | `create-task` | Create a new task | `listId` (string, **required**), `title` (string, **required**), `body` (string, optional), `dueDateTime` (string, optional), `reminderDateTime` (string, optional), `importance` (enum, optional), `startDateTime` (string, optional), `status` (enum, optional), `categories` (string[], optional) |
-| 9 | `update-task` | Update an existing task | `listId` (string, **required**), `taskId` (string, **required**), `title` (string, optional), `body` (string, optional), `dueDateTime` (string, optional), `reminderDateTime` (string, optional), `importance` (enum, optional), `startDateTime` (string, optional), `status` (enum, optional), `categories` (string[], optional) |
-| 10 | `delete-task` | Delete a task | `listId` (string, **required**), `taskId` (string, **required**) |
-| 11 | `complete-task` | Mark a task as completed | `listId` (string, **required**), `taskId` (string, **required**) |
-| 12 | `list-checklist-items` | List checklist items (sub-steps) of a task | `listId` (string, **required**), `taskId` (string, **required**) |
-| 13 | `create-checklist-item` | Create a checklist item (sub-step) on a task | `listId` (string, **required**), `taskId` (string, **required**), `displayName` (string, **required**), `isChecked` (boolean, optional) |
-| 14 | `update-checklist-item` | Update a checklist item (sub-step) | `listId` (string, **required**), `taskId` (string, **required**), `checklistItemId` (string, **required**), `displayName` (string, optional), `isChecked` (boolean, optional) |
-| 15 | `delete-checklist-item` | Delete a checklist item (sub-step) | `listId` (string, **required**), `taskId` (string, **required**), `checklistItemId` (string, **required**) |
+| #   | Tool                    | Description                                  | Parameters                                                                                                                                                                                                                                                                                                                        |
+| --- | ----------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `list-task-lists`       | List all task lists                          | _(none)_                                                                                                                                                                                                                                                                                                                          |
+| 2   | `get-task-list`         | Get a single task list by ID                 | `listId` (string, **required**)                                                                                                                                                                                                                                                                                                   |
+| 3   | `create-task-list`      | Create a new task list                       | `displayName` (string, **required**)                                                                                                                                                                                                                                                                                              |
+| 4   | `update-task-list`      | Update a task list's name                    | `listId` (string, **required**), `displayName` (string, **required**)                                                                                                                                                                                                                                                             |
+| 5   | `delete-task-list`      | Delete a task list                           | `listId` (string, **required**)                                                                                                                                                                                                                                                                                                   |
+| 6   | `list-tasks`            | List tasks in a task list                    | `listId` (string, **required**), `status` (enum, optional), `top` (number, optional, default: 100), `filter` (string, optional — OData $filter expression), `orderby` (string, optional — OData $orderby expression)                                                                                                              |
+| 7   | `get-task`              | Get a single task by ID                      | `listId` (string, **required**), `taskId` (string, **required**)                                                                                                                                                                                                                                                                  |
+| 8   | `create-task`           | Create a new task                            | `listId` (string, **required**), `title` (string, **required**), `body` (string, optional), `dueDateTime` (string, optional), `reminderDateTime` (string, optional), `importance` (enum, optional), `startDateTime` (string, optional), `status` (enum, optional), `categories` (string[], optional)                              |
+| 9   | `update-task`           | Update an existing task                      | `listId` (string, **required**), `taskId` (string, **required**), `title` (string, optional), `body` (string, optional), `dueDateTime` (string, optional), `reminderDateTime` (string, optional), `importance` (enum, optional), `startDateTime` (string, optional), `status` (enum, optional), `categories` (string[], optional) |
+| 10  | `delete-task`           | Delete a task                                | `listId` (string, **required**), `taskId` (string, **required**)                                                                                                                                                                                                                                                                  |
+| 11  | `complete-task`         | Mark a task as completed                     | `listId` (string, **required**), `taskId` (string, **required**)                                                                                                                                                                                                                                                                  |
+| 12  | `list-checklist-items`  | List checklist items (sub-steps) of a task   | `listId` (string, **required**), `taskId` (string, **required**)                                                                                                                                                                                                                                                                  |
+| 13  | `create-checklist-item` | Create a checklist item (sub-step) on a task | `listId` (string, **required**), `taskId` (string, **required**), `displayName` (string, **required**), `isChecked` (boolean, optional)                                                                                                                                                                                           |
+| 14  | `update-checklist-item` | Update a checklist item (sub-step)           | `listId` (string, **required**), `taskId` (string, **required**), `checklistItemId` (string, **required**), `displayName` (string, optional), `isChecked` (boolean, optional)                                                                                                                                                     |
+| 15  | `delete-checklist-item` | Delete a checklist item (sub-step)           | `listId` (string, **required**), `taskId` (string, **required**), `checklistItemId` (string, **required**)                                                                                                                                                                                                                        |
 
 ### Enum Values
 
@@ -137,9 +137,9 @@ Here are example prompts you might give an AI agent connected to this MCP server
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| "Authentication expired" | Re-run `todo setup` to refresh your credentials. |
-| Server not responding | Check that the `TODO_MCP_CLIENT_ID` environment variable is set in your client configuration. |
-| Permission errors | Verify your Azure app registration has the **Tasks.ReadWrite** permission. |
-| Command not found | Make sure `@thingsai/todo-mcp-server` is installed globally (`npm i -g @thingsai/todo-mcp-server`). |
+| Problem                  | Solution                                                                                            |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| "Authentication expired" | Re-run `todo setup` to refresh your credentials.                                                    |
+| Server not responding    | Check that the `TODO_MCP_CLIENT_ID` environment variable is set in your client configuration.       |
+| Permission errors        | Verify your Azure app registration has the **Tasks.ReadWrite** permission.                          |
+| Command not found        | Make sure `@thingsai/todo-mcp-server` is installed globally (`npm i -g @thingsai/todo-mcp-server`). |

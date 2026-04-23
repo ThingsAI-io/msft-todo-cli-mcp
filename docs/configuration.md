@@ -4,12 +4,12 @@ Configuration reference for `@thingsai/todo-mcp-server`.
 
 ## Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `TODO_MCP_CLIENT_ID` | Yes (for setup) | — | Azure AD Application (client) ID from your app registration |
-| `TODO_MCP_TENANT` | No | `consumers` | Azure AD tenant. Options: `consumers` (personal accounts), `common` (personal + org), or a specific tenant ID |
-| `TODO_MCP_ACCESS_TOKEN` | No | — | Use this access token directly, bypassing encrypted store. For CI/headless. |
-| `TODO_MCP_REFRESH_TOKEN` | No | — | Used alongside `TODO_MCP_ACCESS_TOKEN` for token refresh in CI/headless scenarios |
+| Variable                 | Required        | Default     | Description                                                                                                   |
+| ------------------------ | --------------- | ----------- | ------------------------------------------------------------------------------------------------------------- |
+| `TODO_MCP_CLIENT_ID`     | Yes (for setup) | —           | Azure AD Application (client) ID from your app registration                                                   |
+| `TODO_MCP_TENANT`        | No              | `consumers` | Azure AD tenant. Options: `consumers` (personal accounts), `common` (personal + org), or a specific tenant ID |
+| `TODO_MCP_ACCESS_TOKEN`  | No              | —           | Use this access token directly, bypassing encrypted store. For CI/headless.                                   |
+| `TODO_MCP_REFRESH_TOKEN` | No              | —           | Used alongside `TODO_MCP_ACCESS_TOKEN` for token refresh in CI/headless scenarios                             |
 
 ## Token Storage
 
@@ -17,11 +17,11 @@ Tokens are encrypted at rest using AES-256-GCM with a machine-derived key.
 
 ### Storage Locations
 
-| Platform | Path |
-|----------|------|
-| Windows | `%APPDATA%\todo-mcp\tokens.enc` |
-| macOS | `~/.config/todo-mcp/tokens.enc` |
-| Linux | `~/.config/todo-mcp/tokens.enc` |
+| Platform | Path                            |
+| -------- | ------------------------------- |
+| Windows  | `%APPDATA%\todo-mcp\tokens.enc` |
+| macOS    | `~/.config/todo-mcp/tokens.enc` |
+| Linux    | `~/.config/todo-mcp/tokens.enc` |
 
 ### Encryption Details
 

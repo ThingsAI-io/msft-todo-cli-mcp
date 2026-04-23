@@ -167,11 +167,7 @@ describe('token-manager', () => {
     });
 
     const { getAccessToken } = await getModule();
-    const [r1, r2, r3] = await Promise.all([
-      getAccessToken(),
-      getAccessToken(),
-      getAccessToken(),
-    ]);
+    const [r1, r2, r3] = await Promise.all([getAccessToken(), getAccessToken(), getAccessToken()]);
 
     expect(r1).toBe('new-access-token');
     expect(r2).toBe('new-access-token');
@@ -189,9 +185,7 @@ describe('token-manager', () => {
     });
 
     const { getAccessToken } = await getModule();
-    await expect(getAccessToken()).rejects.toThrow(
-      /re-run.*todo setup/i,
-    );
+    await expect(getAccessToken()).rejects.toThrow(/re-run.*todo setup/i);
   });
 
   it('9. network error during refresh throws descriptive error', async () => {
@@ -240,9 +234,7 @@ describe('token-manager', () => {
     await getAccessToken();
 
     const url = mockFetch.mock.calls[0]![0] as string;
-    expect(url).toBe(
-      'https://login.microsoftonline.com/my-custom-tenant/oauth2/v2.0/token',
-    );
+    expect(url).toBe('https://login.microsoftonline.com/my-custom-tenant/oauth2/v2.0/token');
     expect(url).not.toContain('consumers');
   });
 
@@ -250,8 +242,6 @@ describe('token-manager', () => {
     mockLoad.mockReturnValue(null);
 
     const { getAccessToken } = await getModule();
-    await expect(getAccessToken()).rejects.toThrow(
-      /no authentication found/i,
-    );
+    await expect(getAccessToken()).rejects.toThrow(/no authentication found/i);
   });
 });
